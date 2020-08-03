@@ -1,0 +1,33 @@
+images:
+
+
+service:
+  port: 8080
+
+resources:
+  requests:
+    cpu: 0.5
+  limits:
+    cpu: 1
+    memory: 2Gi
+
+ingress:
+  enabled: true
+  subdomain: kraken-scheduler
+
+prometheus:
+  enabled: true
+  path: /actuator/prometheus
+
+discovery:
+  enabled: true
+  role: backend
+  host: claims-bff
+
+role_permission_sidecar:
+  enabled: false
+
+env:
+  ds_maximum_pool_size: 5
+  jwt_enable: true
+

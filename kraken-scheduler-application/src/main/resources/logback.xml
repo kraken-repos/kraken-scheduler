@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration scan="true" scanPeriod="2 seconds" debug="false">
+
+    <appender name="log.console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="com.sap.s4hana.eureka.framework.context.log.LoggerLayoutEncoder">
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}\t%-5level\t%tenantContext\t%userContext\t%requestContext\tThread[%thread]\tLogger[%logger{36}]\tMsg[%msg]%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="Sentry" class="io.sentry.logback.SentryAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+    </appender>
+
+    <root>
+        <level value="INFO" />
+        <appender-ref ref="log.console" />
+        <appender-ref ref="Sentry" />     
+    </root>
+
+</configuration>

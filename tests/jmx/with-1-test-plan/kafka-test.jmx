@@ -1,0 +1,1634 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.1.1 r1855137">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Test Plan" enabled="true">
+      <stringProp name="TestPlan.comments"></stringProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.tearDown_on_shutdown">true</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="host" elementType="Argument">
+            <stringProp name="Argument.name">host</stringProp>
+            <stringProp name="Argument.value">${__P(TARGET_HOST,  localhost)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="port" elementType="Argument">
+            <stringProp name="Argument.name">port</stringProp>
+            <stringProp name="Argument.value">${__P(TARGET_PORT,  8080)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+        </collectionProp>
+      </elementProp>
+      <stringProp name="TestPlan.user_define_classpath"></stringProp>
+    </TestPlan>
+    <hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Thread Group" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <stringProp name="LoopController.loops">1</stringProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">1</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">1</stringProp>
+        <boolProp name="ThreadGroup.scheduler">false</boolProp>
+        <stringProp name="ThreadGroup.duration"></stringProp>
+        <stringProp name="ThreadGroup.delay"></stringProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+      </ThreadGroup>
+      <hashTree>
+        <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
+          <collectionProp name="HeaderManager.headers">
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">Content-Type</stringProp>
+              <stringProp name="Header.value">application/json</stringProp>
+            </elementProp>
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">X-Tenant-ID</stringProp>
+              <stringProp name="Header.value">1</stringProp>
+            </elementProp>
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">X-User-ID</stringProp>
+              <stringProp name="Header.value">1</stringProp>
+            </elementProp>
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">X-Tenant-Schema</stringProp>
+              <stringProp name="Header.value">1</stringProp>
+            </elementProp>
+          </collectionProp>
+        </HeaderManager>
+        <hashTree/>
+        <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP Request Defaults" enabled="true">
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+            <collectionProp name="Arguments.arguments"/>
+          </elementProp>
+          <stringProp name="HTTPSampler.domain">${host}</stringProp>
+          <stringProp name="HTTPSampler.port">${port}</stringProp>
+          <stringProp name="HTTPSampler.protocol"></stringProp>
+          <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+          <stringProp name="HTTPSampler.path"></stringProp>
+          <stringProp name="HTTPSampler.concurrentPool">6</stringProp>
+          <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+          <stringProp name="HTTPSampler.response_timeout"></stringProp>
+        </ConfigTestElement>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="HTTP Request for Claims Request" enabled="true">
+          <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">{&#xd;
+  &quot;attachmentId&quot;:5&#xd;
+}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+          <stringProp name="HTTPSampler.domain"></stringProp>
+          <stringProp name="HTTPSampler.port"></stringProp>
+          <stringProp name="HTTPSampler.protocol"></stringProp>
+          <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+          <stringProp name="HTTPSampler.path">/business/v1/claim-requests/</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+          <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+          <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+          <stringProp name="HTTPSampler.response_timeout"></stringProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Response Assertion for claim request" enabled="true">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="-1409741474">20[0-9]</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.custom_message"></stringProp>
+            <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+            <boolProp name="Assertion.assume_success">false</boolProp>
+            <intProp name="Assertion.test_type">1</intProp>
+            <stringProp name="Assertion.scope">all</stringProp>
+          </ResponseAssertion>
+          <hashTree/>
+          <JSR223Assertion guiclass="TestBeanGUI" testclass="JSR223Assertion" testname="JSR223 Assertion for claim http request" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="script">import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
+JsonSlurper jsonSlurper = new JsonSlurper();
+
+println JsonOutput.prettyPrint(prev.getResponseDataAsString());
+def responseData = jsonSlurper.parseText(prev.getResponseDataAsString());
+
+vars.put(&quot;claimRequestId&quot;,responseData + &quot;&quot;);</stringProp>
+          </JSR223Assertion>
+          <hashTree/>
+        </hashTree>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="JSR223 Sampler prepare" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">
+import org.apache.jmeter.services.FileServer
+import org.apache.jmeter.gui.GuiPackage;
+import org.apache.commons.io.FilenameUtils;
+
+String testPlanFileDir = FileServer.getFileServer().getBaseDir();
+vars.put(&quot;testPlanFileDir&quot;, testPlanFileDir);
+
+File file = new File(testPlanFileDir + &quot;/jmeter.properties&quot;);
+InputStream configInputStream = new FileInputStream(file);
+Properties configProperties = new Properties();
+configProperties.load(configInputStream);
+
+String enabled = configProperties.getOrDefault(&quot;jmeter.enabled&quot;,&quot;false&quot;);
+vars.put(&quot;jmeter.enabled&quot;,enabled);
+boolean jmeterEnabled = Boolean.valueOf(enabled);
+vars.putObject(&quot;testingConfigProperties&quot;,configProperties);
+
+if(jmeterEnabled){
+
+Properties kakfkaConncetionProps = new Properties();
+	if(configProperties.get(&quot;kafka.bootstrap.servers&quot;) == null){
+		String kafakconfigLocation = configProperties.getOrDefault(&quot;kafka.config.location&quot;,&quot;/etc/secrets/kafka/kafka.properties&quot;);
+		File kafkaConfigFile = new File(kafakconfigLocation);
+		InputStream kafkaConfigInputStream = new FileInputStream(kafkaConfigFile);
+		Properties kafkaBasicProperties = new Properties();
+		kafkaBasicProperties.load(kafkaConfigInputStream);
+			
+		String mechanism = &quot;PLAIN&quot;;
+		String protocol = kafkaBasicProperties.getOrDefault(&quot;KAFKA_PROTOCOL&quot;, &quot;SASL_SSL&quot;); //&quot;PLAINTEXT&quot;
+		String user = kafkaBasicProperties.get(&quot;KAFKA_USER&quot;);
+		String password =  kafkaBasicProperties.get(&quot;KAFKA_PASSWD&quot;);
+ 		String salConfig = &quot;org.apache.kafka.common.security.plain.PlainLoginModule required username=\&quot;&quot; + user + &quot;\&quot; password=\&quot;&quot; + password + &quot;\&quot;&quot; + &quot;;&quot; ;
+ 		String brokers = kafkaBasicProperties.get(&quot;KAFKA_HOST&quot;) + &quot;:&quot; + kafkaBasicProperties.get(&quot;KAFKA_PORT&quot;);
+ 		kakfkaConncetionProps.put(&quot;bootstrap.servers&quot;,brokers);
+ 		kakfkaConncetionProps.put(&quot;security.protocol&quot;,protocol);
+ 		kakfkaConncetionProps.put(&quot;sasl.mechanism&quot;,mechanism);
+ 		kakfkaConncetionProps.put(&quot;sasl.jaas.config&quot;,salConfig);
+	}
+	else{
+		kakfkaConncetionProps.put(&quot;bootstrap.servers&quot;,configProperties.get(&quot;kafka.bootstrap.servers&quot;));
+		kakfkaConncetionProps.put(&quot;security.protocol&quot;,configProperties.get(&quot;kafka.security.protocol&quot;));
+		kakfkaConncetionProps.put(&quot;sasl.mechanism&quot;,configProperties.get(&quot;kafka.sasl.mechanism&quot;));
+		kakfkaConncetionProps.put(&quot;sasl.jaas.config&quot;,configProperties.get(&quot;kafka.sasl.jaas.config&quot;));
+	}
+ 	
+ 	kakfkaConncetionProps.put(&quot;group.id&quot;,configProperties.getOrDefault(&quot;kafa.groupId&quot;,&quot;jmeter-managment&quot;));
+ 	kakfkaConncetionProps.put(&quot;enable.auto.commit&quot;,configProperties.getOrDefault(&quot;kafka.enable.auto.commit&quot;,&quot;true&quot;));
+	kakfkaConncetionProps.put(&quot;acks&quot;, configProperties.getOrDefault(&quot;kafka.acks&quot;,&quot;all&quot;));
+	kakfkaConncetionProps.put(&quot;retries&quot;, configProperties.getOrDefault(&quot;kafka.retries&quot;,0));
+	kakfkaConncetionProps.put(&quot;auto.commit.interval.ms&quot;,configProperties.getOrDefault(&quot;kafka.auto.commit.interval.ms&quot;,&quot;1000&quot;));
+ 	kakfkaConncetionProps.put(&quot;session.timeout.ms&quot;, configProperties.getOrDefault(&quot;kafka.session.timeout.ms&quot;,&quot;120000&quot;));
+ 	kakfkaConncetionProps.put(&quot;key.serializer&quot;,
+ 		configProperties.getOrDefault(&quot;kafka.key.serializer&quot;,&quot;org.apache.kafka.common.serialization.StringSerializer&quot;));
+ 	kakfkaConncetionProps.put(&quot;value.serializer&quot;,
+ 		configProperties.getOrDefault(&quot;kafka.value.serializer&quot;,&quot;org.apache.kafka.common.serialization.StringSerializer&quot;));
+ 	
+ 	kakfkaConncetionProps.put(&quot;batch.size&quot;,configProperties.getOrDefault(&quot;kafka.batch.size&quot;,&quot;16384&quot;));
+ 	kakfkaConncetionProps.put(&quot;send.buffer.bytes&quot;,configProperties.getOrDefault(&quot;kafka.send.buffer.bytes&quot;,&quot;131072&quot;));
+ 	kakfkaConncetionProps.put(&quot;receive.buffer.bytes&quot;,configProperties.getOrDefault(&quot;kafka.receive.buffer.bytes&quot;, &quot;32768&quot;));
+ 	kakfkaConncetionProps.put(&quot;buffer.memory&quot;,configProperties.getOrDefault(&quot;kafka.buffer.memory&quot;,&quot;33554432&quot;))
+ 
+ 	kakfkaConncetionProps.put(&quot;key.deserializer&quot;,
+		configProperties.getOrDefault(&quot;kafka.key.deserializer&quot;,&quot;org.apache.kafka.common.serialization.StringDeserializer&quot;));
+ 	kakfkaConncetionProps.put(&quot;value.deserializer&quot;,
+ 		configProperties.getOrDefault(&quot;kafka.value.deserializer&quot;,&quot;org.apache.kafka.common.serialization.StringDeserializer&quot;));
+
+	vars.putObject(&quot;kafkaConncetionProps&quot;,kakfkaConncetionProps);
+	log.info(kakfkaConncetionProps.get(&quot;bootstrap.servers&quot;));
+ 	log.info(&quot;================= Properties loadding completes =================&quot;)
+}
+
+
+</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="JSR223 Sampler claim request consumer" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">import org.apache.kafka.clients.consumer.*
+import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.kafka.clients.producer.ProducerConfig
+import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.common.serialization.LongDeserializer
+import org.apache.kafka.common.serialization.LongSerializer
+import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.kafka.common.serialization.StringSerializer
+import org.apache.jmeter.services.FileServer
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.TopicPartition;
+import groovy.json.JsonSlurper;
+
+if(Boolean.valueOf(vars.get(&quot;jmeter.enabled&quot;))){
+	Properties props = (Properties)vars.getObject(&quot;kafkaConncetionProps&quot;)
+	if(props != null)
+	{
+		JsonSlurper jsonSlurper = new JsonSlurper();
+		KafkaConsumer&lt;String, String&gt; consumer = new KafkaConsumer&lt;String, String&gt;(props);
+		consumer.subscribe(Arrays.asList(&quot;ClaimRequestCreatedByUpload&quot;));
+		TopicPartition partition0 = new TopicPartition(&quot;ClaimRequestCreatedByUpload&quot;, 0);
+		log.info(&quot;Subscribed to topic &quot; + &quot;ClaimRequestCreatedByUpload&quot;);
+		int i = 0;
+		long time =  System.currentTimeMillis();
+		long end = time + 90000;
+		final int resultSize = 1;
+		String value =&quot;&quot;;
+		boolean isCompleted = false;
+		boolean flag = true;
+		while(time &lt; end &amp;&amp; !isCompleted){
+		ConsumerRecords&lt;String, String&gt; records = consumer.poll(100);
+		if(flag){
+			consumer.seek(partition0,0)
+			flag = false;	
+		}
+		 if(records.count() != 0){
+		 	 for (ConsumerRecord&lt;String, String&gt; record : records){
+			 	vars.putObject(&quot;headers&quot;,record.headers());
+			 	def values = jsonSlurper.parseText(record.value());
+			 	log.info(&quot;offset = {}, key = {}, value = {}\n&quot;, record.offset(), record.key(), record.value());
+			 	int id = Integer.valueOf(vars.get(&quot;claimRequestId&quot;))
+			 	if(values.id == id){
+			 		log.info(&quot;cliam Request Id is &quot; + values.id)
+			 		vars.put(&quot;value&quot;,record.value());
+			 		isCompleted = true;
+			 		break;
+			 	}
+		 	}
+		 }    
+		  time = System.currentTimeMillis();
+		 }
+		 consumer.close();
+		}
+}</stringProp>
+        </JSR223Sampler>
+        <hashTree>
+          <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="JSR223 PreProcessor" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="script">final String responseContent = &quot;{\n&quot; +
+            &quot;    \&quot;extraction\&quot;: {\n&quot; +
+            &quot;        \&quot;lineItems\&quot;: [\n&quot; +
+            &quot;            [\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;settlement_doc_type\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;RBV1\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;vendor_billing_posting_date\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;11/22/19\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;text_for_merchandiese_category_1\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;Soup\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;taxes\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;0\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;valid_from\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;12/30/18\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;subrange_of_activity_type\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;vendor_number\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;100023\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;net_settlement_amount\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;16194\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;reference\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;2223\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;po_number\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;8334\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;case_upc\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;63100479247\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;total_settlement\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;16194\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;contract_number\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;2222\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;debit_note\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;444452\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;valid_to\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;12/28/19\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;delivery_method\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;billing_type\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;contract_rate\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;4\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;currency\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;USD\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;text_contract_type\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;Volume\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;id\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;3544\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;contract_rate_type\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;A\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;settlement_date\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;11/22/19\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;article_description\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;BITTNER&apos;S O/R TURKEY BRST SV\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;condition_currency\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;%\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;external_number\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;83834_NOTE\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;retail_upc\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;vendor_name\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;ABC Company\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;fuel_surcharge\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;0\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;article\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;39378\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;settlement_currency\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;USD\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;dc_region\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;34\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;uom.2\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;pack_size\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;reference_1\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;NOTE NOTE\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;po_quantity\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;56\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;cancelled\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;first_settlement_date_for_source_doc\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;11/22/19\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;dc\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;TRE\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;customer\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;Loblaws\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                }\n&quot; +
+            &quot;            ],\n&quot; +
+            &quot;            [\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;settlement_doc_type\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;RBV1\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;vendor_billing_posting_date\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;11/22/19\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;text_for_merchandiese_category_1\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;Sauce\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;taxes\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;0\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;valid_from\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;12/30/18\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;subrange_of_activity_type\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;vendor_number\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;100023\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;net_settlement_amount\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;73352\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;reference\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;2223\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;po_number\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;4975\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;case_upc\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;63100170359\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;total_settlement\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;73352\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;contract_number\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;2222\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;debit_note\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;444452\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;valid_to\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;12/28/19\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;delivery_method\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;billing_type\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;contract_rate\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;4\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;currency\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;USD\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;text_contract_type\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;Volume\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;id\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;5434\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;contract_rate_type\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;A\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;settlement_date\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;11/22/19\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;article_description\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;BURNS VISK BOLOGNA\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;condition_currency\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;%\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;external_number\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;83834_NOTE\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;retail_upc\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;92347234623\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;vendor_name\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;ABC Company\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;fuel_surcharge\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;0\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;article\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;2332323\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;settlement_currency\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;USD\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;dc_region\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;54\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;uom.2\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;pack_size\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;6\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;reference_1\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;NOTE NOTE\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;po_quantity\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;96\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;cancelled\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;first_settlement_date_for_source_doc\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;11/22/19\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;dc\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;RAC\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;customer\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;Loblaws\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                }\n&quot; +
+            &quot;            ],\n&quot; +
+            &quot;            [\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;settlement_doc_type\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;RBV1\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;vendor_billing_posting_date\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;11/22/19\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;text_for_merchandiese_category_1\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;Soup\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;taxes\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;0\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;valid_from\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;12/30/18\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;subrange_of_activity_type\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;vendor_number\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;100023\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;net_settlement_amount\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;2837\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;reference\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;2223\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;po_number\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;4975\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;case_upc\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;63100452060\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;total_settlement\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;2837\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;contract_number\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;2222\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;debit_note\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;444452\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;valid_to\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;12/28/19\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;delivery_method\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;billing_type\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;contract_rate\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;4\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;currency\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;USD\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;text_contract_type\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;Volume\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;id\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;3544\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;contract_rate_type\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;A\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;settlement_date\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;11/22/19\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;article_description\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;CAMPFIRE SLICED BACON\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;condition_currency\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;%\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;external_number\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;83834_NOTE\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;retail_upc\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;vendor_name\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;ABC Company\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;fuel_surcharge\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;0\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;article\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;3354\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;settlement_currency\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;USD\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;dc_region\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;34\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;uom.2\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;pack_size\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;reference_1\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;NOTE NOTE\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;po_quantity\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;84\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;cancelled\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;first_settlement_date_for_source_doc\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;11/22/19\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;dc\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;TRE\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                },\n&quot; +
+            &quot;                {\n&quot; +
+            &quot;                    \&quot;name\&quot;: \&quot;customer\&quot;,\n&quot; +
+            &quot;                    \&quot;value\&quot;: \&quot;Loblaws\&quot;,\n&quot; +
+            &quot;                    \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                    \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                    \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;                }\n&quot; +
+            &quot;            ]\n&quot; +
+            &quot;        ],\n&quot; +
+            &quot;        \&quot;headerFields\&quot;: [\n&quot; +
+            &quot;            {\n&quot; +
+            &quot;                \&quot;name\&quot;: \&quot;documentDate\&quot;,\n&quot; +
+            &quot;                \&quot;value\&quot;: \&quot;11/22/19\&quot;,\n&quot; +
+            &quot;                \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;            },\n&quot; +
+            &quot;            {\n&quot; +
+            &quot;                \&quot;name\&quot;: \&quot;senderStreet\&quot;,\n&quot; +
+            &quot;                \&quot;value\&quot;: \&quot;555 Candy Lane\&quot;,\n&quot; +
+            &quot;                \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;            },\n&quot; +
+            &quot;            {\n&quot; +
+            &quot;                \&quot;name\&quot;: \&quot;senderAddress\&quot;,\n&quot; +
+            &quot;                \&quot;value\&quot;: \&quot;555 Candy Lane Hoboken, NJ 07030\&quot;,\n&quot; +
+            &quot;                \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;            },\n&quot; +
+            &quot;            {\n&quot; +
+            &quot;                \&quot;name\&quot;: \&quot;senderName\&quot;,\n&quot; +
+            &quot;                \&quot;value\&quot;: \&quot;Loblaws\&quot;,\n&quot; +
+            &quot;                \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;            },\n&quot; +
+            &quot;            {\n&quot; +
+            &quot;                \&quot;name\&quot;: \&quot;senderState\&quot;,\n&quot; +
+            &quot;                \&quot;value\&quot;: \&quot;NJ\&quot;,\n&quot; +
+            &quot;                \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;            },\n&quot; +
+            &quot;            {\n&quot; +
+            &quot;                \&quot;name\&quot;: \&quot;documentNumber\&quot;,\n&quot; +
+            &quot;                \&quot;value\&quot;: \&quot;444452\&quot;,\n&quot; +
+            &quot;                \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;            },\n&quot; +
+            &quot;            {\n&quot; +
+            &quot;                \&quot;name\&quot;: \&quot;senderZip\&quot;,\n&quot; +
+            &quot;                \&quot;value\&quot;: \&quot;07030\&quot;,\n&quot; +
+            &quot;                \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;            },\n&quot; +
+            &quot;            {\n&quot; +
+            &quot;                \&quot;name\&quot;: \&quot;currencyCode\&quot;,\n&quot; +
+            &quot;                \&quot;value\&quot;: \&quot;USD\&quot;,\n&quot; +
+            &quot;                \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;            },\n&quot; +
+            &quot;            {\n&quot; +
+            &quot;                \&quot;name\&quot;: \&quot;senderCity\&quot;,\n&quot; +
+            &quot;                \&quot;value\&quot;: \&quot;Hoboken\&quot;,\n&quot; +
+            &quot;                \&quot;confidence\&quot;: \&quot;1.00\&quot;,\n&quot; +
+            &quot;                \&quot;page\&quot;: \&quot;1\&quot;,\n&quot; +
+            &quot;                \&quot;coordinates\&quot;: {}\n&quot; +
+            &quot;            }\n&quot; +
+            &quot;        ]\n&quot; +
+            &quot;    },\n&quot; +
+            &quot;    \&quot;country\&quot;: \&quot;XX\&quot;,\n&quot; +
+            &quot;    \&quot;documentType\&quot;: \&quot;invoice\&quot;,\n&quot; +
+            &quot;    \&quot;created\&quot;: \&quot;2020-01-05 07:53:25.588\&quot;,\n&quot; +
+            &quot;    \&quot;status\&quot;: \&quot;DONE\&quot;,\n&quot; +
+            &quot;    \&quot;languages\&quot;: []\n,&quot; +
+            &quot;    \&quot;claimRequestId\&quot;: \&quot;&quot; ;
+            
+vars.put(&quot;responseContent&quot;,responseContent);  
+            </stringProp>
+          </JSR223PreProcessor>
+          <hashTree/>
+          <JSR223Assertion guiclass="TestBeanGUI" testclass="JSR223Assertion" testname="JSR223 Assertion for request consumer  " enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="script">import groovy.json.JsonSlurper;
+
+if(Boolean.valueOf(vars.get(&quot;jmeter.enabled&quot;))){
+JsonSlurper jsonSlurper = new JsonSlurper();
+def failureMessage = &quot;&quot;;
+def request = jsonSlurper.parseText(vars.get(&quot;value&quot;));
+try{
+	if(request.id == vars.get(&quot;claimRequestId&quot;)){
+		failureMessage += &quot;Your Claim Request id is Invalid \n&quot;;
+	}
+}catch(Exception e){
+	failureMessage += &quot;Your Claim Request id is Invalid \n &quot;;
+}
+
+String documentType = request.documentType
+
+String status = request.status;
+if(status == null || !status.equals(&quot;WAITING_FOR_AUTOFILL&quot;))
+	failureMessage += &quot;Claim Request status is Invalid \n&quot;
+if(failureMessage?.trim()){
+	AssertionResult.setFailureMessage(failureMessage);
+	AssertionResult.setFailure(true);
+}
+
+}</stringProp>
+          </JSR223Assertion>
+          <hashTree/>
+        </hashTree>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="JSR223 Sampler document extraction producer" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">import org.apache.kafka.clients.consumer.*
+import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.kafka.clients.producer.ProducerConfig
+import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.common.serialization.LongDeserializer
+import org.apache.kafka.common.serialization.LongSerializer
+import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.kafka.common.serialization.StringSerializer
+import org.apache.jmeter.services.FileServer
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.header.Header;
+
+
+if(Boolean.valueOf(vars.get(&quot;jmeter.enabled&quot;))){
+	Properties props = (Properties)vars.getObject(&quot;kafkaConncetionProps&quot;)
+	String responseContent = vars.get(&quot;responseContent&quot;) + vars.get(&quot;claimRequestId&quot;) + &quot;\&quot;}&quot;;
+	KafkaProducer&lt;String, String&gt; producer = new KafkaProducer&lt;&gt;(props);
+	ProducerRecord&lt;String,String&gt; producerRecord = new ProducerRecord&lt;String,String&gt;(&quot;DocumentExtracted&quot;,&quot;1&quot;,responseContent);
+	Headers headers = (Headers)vars.getObject(&quot;headers&quot;);
+	for(Header header : headers){
+		producerRecord.headers().add(header);	
+	}
+	producer.send(producerRecord);
+	log.info(&quot;sending to topic DocumentExtracted .........&quot;);
+	sleep(10000);
+}
+
+
+
+
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="HTTP Request for autofilled" enabled="true">
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="Variables pré-définies" enabled="true">
+            <collectionProp name="Arguments.arguments"/>
+          </elementProp>
+          <stringProp name="HTTPSampler.domain"></stringProp>
+          <stringProp name="HTTPSampler.port"></stringProp>
+          <stringProp name="HTTPSampler.protocol"></stringProp>
+          <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+          <stringProp name="HTTPSampler.path">/business/v1/claim-requests/${claimRequestId}/</stringProp>
+          <stringProp name="HTTPSampler.method">GET</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+          <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+          <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+          <stringProp name="HTTPSampler.response_timeout"></stringProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Response Assertion" enabled="true">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="-1409741474">20[0-9]</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.custom_message"></stringProp>
+            <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+            <boolProp name="Assertion.assume_success">false</boolProp>
+            <intProp name="Assertion.test_type">1</intProp>
+          </ResponseAssertion>
+          <hashTree/>
+          <JSR223Assertion guiclass="TestBeanGUI" testclass="JSR223Assertion" testname="JSR223 Assertion for autofilled http request" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="script">import groovy.json.JsonSlurper;
+
+if(Boolean.valueOf(vars.get(&quot;jmeter.enabled&quot;))){
+JsonSlurper jsonSlurper = new JsonSlurper();
+def failureMessage = &quot;&quot;;
+String values = prev.getResponseDataAsString();
+def request = jsonSlurper.parseText(values);
+
+try{
+	if(request.id &lt;= 0){
+		failureMessage += &quot;Your Claim Request id is Invalid \n&quot;;
+	}
+}catch(Exception e){
+	failureMessage += &quot;Your Claim Request id is Invalid \n &quot;;
+}
+
+String documentType = request.documentType
+
+String status = request.status;
+if(status == null || !status.equals(&quot;AUTOFILLED&quot;))
+	failureMessage += &quot;Claim Request status is Invalid \n&quot;
+if(failureMessage?.trim()){
+	AssertionResult.setFailureMessage(failureMessage);
+	AssertionResult.setFailure(true);
+}
+
+}</stringProp>
+          </JSR223Assertion>
+          <hashTree/>
+        </hashTree>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="HTTP Request For Finalized" enabled="true">
+          <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">${finalizedJson}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+          <stringProp name="HTTPSampler.domain"></stringProp>
+          <stringProp name="HTTPSampler.port"></stringProp>
+          <stringProp name="HTTPSampler.protocol"></stringProp>
+          <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+          <stringProp name="HTTPSampler.path">/business/v1/claim-requests/${claimRequestId}/finalize</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+          <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+          <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+          <stringProp name="HTTPSampler.response_timeout"></stringProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Response Assertion" enabled="true">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="-1409741474">20[0-9]</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.custom_message"></stringProp>
+            <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+            <boolProp name="Assertion.assume_success">false</boolProp>
+            <intProp name="Assertion.test_type">1</intProp>
+          </ResponseAssertion>
+          <hashTree/>
+          <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="JSR223 PreProcessor" enabled="true">
+            <stringProp name="scriptLanguage">javascript</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="script">var jsonObject = {
+        &quot;id&quot;: vars.get(&quot;claimRequestId&quot;),
+         &quot;documentNumber&quot;: &quot;444452&quot;,
+   	    &quot;documentType&quot;: &quot;DEBIT_NOTE&quot;,
+    &quot;status&quot;: &quot;AUTOFILLED&quot;,
+    &quot;externalReference&quot;: &quot;83834_NOTE&quot;,
+    &quot;dueDate&quot;: null,
+    &quot;attachmentId&quot;: 1,
+    &quot;totalAmount&quot;: 92383,
+    &quot;totalCurrency&quot;: &quot;USD&quot;,
+    &quot;claimedAmount&quot;: 92383,
+    &quot;claimedCurrency&quot;: &quot;USD&quot;,
+    &quot;documentDate&quot;: &quot;2019-11-22T00:00:00.000+0000&quot;,
+    &quot;claimerCustomerId&quot;: null,
+    &quot;claimerName&quot;: &quot;Loblaws&quot;,
+    &quot;claimerStreetAddress&quot;: null,
+    &quot;claimerCity&quot;: null,
+    &quot;claimerState&quot;: null,
+    &quot;claimerCountry&quot;: null,
+    &quot;claimerZipCode&quot;: null,
+    &quot;claimerRegionCode&quot;: &quot;34&quot;,
+    &quot;detailLines&quot;: [
+        {
+            &quot;description&quot;: &quot;BITTNER&apos;S O/R TURKEY BRST SV&quot;,
+            &quot;materialId&quot;: 63100479248,
+            &quot;lineMoneyAmount&quot;: 16194,
+            &quot;lineMoneyCurrency&quot;: &quot;USD&quot;,
+            &quot;unitPriceAmount&quot;: null,
+            &quot;unitPriceCurrency&quot;: null
+        },
+        {
+            &quot;description&quot;: &quot;BURNS VISK BOLOGNA&quot;,
+            &quot;materialId&quot;: 63100170359,
+            &quot;lineMoneyAmount&quot;: 73352,
+            &quot;lineMoneyCurrency&quot;: &quot;USD&quot;,
+            &quot;unitPriceAmount&quot;: null,
+            &quot;unitPriceCurrency&quot;: null
+        },
+        {
+            &quot;description&quot;: &quot;CAMPFIRE SLICED BACON&quot;,
+            &quot;materialId&quot;: 63100452060,
+            &quot;lineMoneyAmount&quot;: 2837,
+            &quot;lineMoneyCurrency&quot;: &quot;USD&quot;,
+            &quot;unitPriceAmount&quot;: null,
+            &quot;unitPriceCurrency&quot;: null
+        }
+    ]
+ }
+vars.put(&quot;finalizedJson&quot;,JSON.stringify(jsonObject));
+
+</stringProp>
+          </JSR223PreProcessor>
+          <hashTree/>
+          <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
+            <collectionProp name="HeaderManager.headers">
+              <elementProp name="" elementType="Header">
+                <stringProp name="Header.name">X-Tenant-ID</stringProp>
+                <stringProp name="Header.value">1</stringProp>
+              </elementProp>
+            </collectionProp>
+          </HeaderManager>
+          <hashTree/>
+        </hashTree>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="Finalized Message Checker" enabled="false">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">import org.apache.kafka.clients.consumer.*
+import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.kafka.clients.producer.ProducerConfig
+import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.common.serialization.LongDeserializer
+import org.apache.kafka.common.serialization.LongSerializer
+import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.kafka.common.serialization.StringSerializer
+import org.apache.kafka.common.header.*;
+import org.apache.kafka.common.TopicPartition;
+import groovy.json.JsonSlurper;
+
+if(Boolean.valueOf(vars.get(&quot;jmeter.enabled&quot;))){
+	Properties props = (Properties)vars.getObject(&quot;kafkaConncetionProps&quot;);
+
+	if(props != null){
+	KafkaConsumer&lt;String, String&gt; consumer = new KafkaConsumer&lt;String, String&gt;(props);
+	TopicPartition partition0 = new TopicPartition(&quot;ClaimRequestFinalized&quot;, 0);
+     consumer.subscribe(Arrays.asList(&quot;ClaimRequestFinalized&quot;));
+	log.info(&quot;Subscribed to topic &quot; + &quot;ClaimRequestFinalized&quot;);
+	int i = 0;
+	long time =  System.currentTimeMillis();
+	long end = time + 20000;
+	final int resultSize = 1;
+	boolean isCompleted = false;
+	JsonSlurper jsonSlurper = new JsonSlurper();
+	boolean flag = true;
+	while(time &lt; end &amp;&amp; !isCompleted){
+	ConsumerRecords&lt;String, String&gt; records = consumer.poll(100);
+	if(flag){
+		consumer.seek(partition0,0)
+		flag = false;	
+	}
+	if(records.count() != 0 ){
+		 for (ConsumerRecord&lt;String, String&gt; record : records){
+			log.info(&quot;offset = {}, key = {}, value = {}\n&quot;, record.offset(), record.key(), record.value());
+			def values = jsonSlurper.parseText(record.value());
+			int id = Integer.valueOf(vars.get(&quot;claimRequestId&quot;));
+			if(values.id == id){
+				vars.put(&quot;finalizedValue&quot;,record.value());
+			isCompleted = true;
+			break;
+			}
+		}	
+	 }    
+		time = System.currentTimeMillis();
+	}
+	
+	consumer.close();
+	}
+}
+
+</stringProp>
+        </JSR223Sampler>
+        <hashTree>
+          <JSR223Assertion guiclass="TestBeanGUI" testclass="JSR223Assertion" testname="JSR223 Assertion Finalized Checker" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="script">import groovy.json.JsonSlurper
+
+
+if(Boolean.valueOf(vars.get(&quot;jmeter.enabled&quot;))){
+	boolean enabled = true;
+	String finalizedValue = vars.get(&quot;finalizedValue&quot;);
+	JsonSlurper jsonSlurper = new JsonSlurper();
+	def response = response = jsonSlurper.parseText(finalizedValue);
+	def failureMessage = &quot;&quot;;
+	try{
+	if(response.id &lt;= 0){
+		failureMessage += &quot;Your Finalized Response id is Invalid \n&quot;;
+	}
+	}catch(Exception e){
+		failureMessage += &quot;Your Finalized Response id is Invalid \n &quot;;
+	}
+	String status = response.status;
+	if(status == null || !status.equals(&quot;FINALIZED&quot;))
+		failureMessage += &quot;Your Finalized Response status is Invalid \n&quot;
+	if(failureMessage?.trim() &amp;&amp; failureMessage.trim().length() != 0 &amp;&amp; enabled){
+		AssertionResult.setFailureMessage(failureMessage);
+		AssertionResult.setFailure(true);
+	}
+}
+</stringProp>
+          </JSR223Assertion>
+          <hashTree/>
+        </hashTree>
+        <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report" enabled="true">
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <objProp>
+            <name>saveConfig</name>
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>false</xml>
+              <fieldNames>true</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+              <sentBytes>true</sentBytes>
+              <url>true</url>
+              <threadCounts>true</threadCounts>
+              <idleTime>true</idleTime>
+              <connectTime>true</connectTime>
+            </value>
+          </objProp>
+          <stringProp name="filename"></stringProp>
+        </ResultCollector>
+        <hashTree/>
+        <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <objProp>
+            <name>saveConfig</name>
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>true</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>true</responseData>
+              <samplerData>true</samplerData>
+              <xml>true</xml>
+              <fieldNames>true</fieldNames>
+              <responseHeaders>true</responseHeaders>
+              <requestHeaders>true</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+              <url>true</url>
+              <fileName>true</fileName>
+              <hostname>true</hostname>
+              <threadCounts>true</threadCounts>
+              <sampleCount>true</sampleCount>
+              <idleTime>true</idleTime>
+            </value>
+          </objProp>
+          <stringProp name="filename">kafka-test.jtl</stringProp>
+        </ResultCollector>
+        <hashTree/>
+      </hashTree>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>

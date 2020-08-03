@@ -1,0 +1,2 @@
+export MAVEN_PUBLIC=https://nexus.eurekacloud.io/repository/maven-public/
+export MAVEN_SNAPSHOTS=https://nexus.eurekacloud.io/repository/maven-snapshots/

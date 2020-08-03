@@ -1,0 +1,51 @@
+plugins {
+    id 'java-library'
+    id 'jacoco'
+}
+
+subprojects {
+    apply plugin: 'java-library'
+    apply plugin: 'jacoco'
+
+    repositories {
+        mavenCentral()
+        maven {
+            url 'https://nexus.eurekacloud.io/repository/maven-public/'
+        }
+        // mavenLocal()
+    }
+
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+
+    /** General **/
+    dependencies{
+        implementation platform("com.sap.s4hana.eureka.framework:app-frw-ng-dependencies:${property('app-frw-version')}")
+        annotationProcessor platform("com.sap.s4hana.eureka.framework:app-frw-bom:${property('app-frw-version')}")
+        testAnnotationProcessor platform("com.sap.s4hana.eureka.framework:app-frw-bom:${property('app-frw-version')}")
+
+        compileOnly  'org.projectlombok:lombok'
+        annotationProcessor 'org.projectlombok:lombok'
+        testCompileOnly 'org.projectlombok:lombok'
+        testAnnotationProcessor 'org.projectlombok:lombok'
+
+        testImplementation 'org.junit.jupiter:junit-jupiter'
+        testImplementation 'org.mockito:mockito-core'
+        testImplementation 'org.mockito:mockito-junit-jupiter'
+    }
+    
+    test {
+        useJUnitPlatform()
+    }
+
+    jacocoTestCoverageVerification {
+        violationRules {
+            rule {
+                limit {
+                    minimum = 0.8
+                }
+            }
+        }
+    }
+}
+

@@ -1,0 +1,7 @@
+resources:
+  limits:
+    cpu: 1
+    memory: 4Gi
+
+env:
+  ds_maximum_pool_size: 20

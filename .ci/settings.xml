@@ -1,0 +1,31 @@
+<settings>
+    <localRepository>.m2/repository</localRepository>
+    <mirrors>
+        <mirror>
+            <id>mirror</id>
+            <url>${env.MAVEN_PUBLIC}</url>
+            <mirrorOf>*</mirrorOf>
+        </mirror>
+    </mirrors>
+
+    <profiles>
+        <profile>
+            <id>eureka</id>
+            <repositories>
+                <repository>
+                    <id>snapshots</id>
+                    <url>${env.MAVEN_SNAPSHOTS}</url>
+                    <snapshots>
+                        <enabled>true</enabled>
+                        <updatePolicy>always</updatePolicy>
+                        <checksumPolicy>warn</checksumPolicy>
+                    </snapshots>
+                </repository>
+            </repositories>
+        </profile>
+    </profiles>
+
+    <activeProfiles>
+        <activeProfile>eureka</activeProfile>
+    </activeProfiles>
+</settings>

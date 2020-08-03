@@ -1,0 +1,35 @@
+plugins {
+    id 'org.springframework.boot' version "2.2.6.RELEASE"
+    id 'application'
+}
+apply plugin: 'org.springframework.boot'
+apply plugin: 'application'
+
+dependencies {
+    implementation project(':kraken-scheduler-api')
+    implementation project(':kraken-scheduler-consumer')
+    implementation project(':kraken-scheduler-tenantlcm')
+
+    implementation 'com.sap.s4hana.eureka.framework:app-frw-event-kafka-starter'
+    implementation 'com.sap.s4hana.eureka.framework:app-frw-autoconfigure-starter'
+    implementation 'com.sap.s4hana.eureka.framework:app-frw-context-starter'
+    implementation 'com.sap.s4hana.eureka.framework:app-frw-observation-starter'
+    implementation 'com.sap.s4hana.eureka.framework:app-frw-rest-sentinel-starter'
+
+    runtimeOnly "com.sap.foss.hana:liquibase-hana:${property('liquibase-hana-ext-version')}"
+    runtimeOnly "com.sap.cloud.db.jdbc:ngdbc:${property('ngdbc-version')}"
+}
+
+bootRun{
+    workingDir("..")
+    environment = [ jwt_enable: "false" ]
+}
+
+application {
+    mainClassName = 'com.sap.s4hana.eureka.business.krakenscheduler.Application'
+}
+
+group 'com.sap.s4hana.eureka.business.krakenscheduler'
+
+archivesBaseName='kraken-scheduler-service'
+
