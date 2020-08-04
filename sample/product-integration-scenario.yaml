@@ -1,0 +1,29 @@
+apiVersion: scheduler.kraken.dev/v1alpha1
+kind: IntegrationScenario
+metadata:
+  name: product-integration-scenario
+spec:
+  tenantId: "approuter-demo-5cec31cb-916c-4afa-bc94-d618d0bb5206.cfapps.us10.hana.ondemand.com"
+  rootObjectType: "Product"
+  domainExtractionParameters:
+    connectionType: "HTTP"
+    entityGroupName: "API_PRODUCT_SRV"
+    entitySetName: "A_Product"
+    selectFields: "Product,BaseUnit,ProductGroup,Brand,to_Description"
+    paginationField: "LastChangeDate"
+    expandEntities: "to_Description"
+    additionalProperties:
+      sapClient: "910"
+      sapLanguage: "EN"
+  frameworkParameters:
+    parallelism: "1"
+    noOfPackets: "200"
+    packetGenSchedule: "*/10 * * * *"
+    jobProcessSchedule: "*/10 * * * *"
+  resources:
+    limits:
+      cpu: 250m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 512Mi

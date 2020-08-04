@@ -1,0 +1,155 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    scheduler.kraken.dev/release: "v0.13.0"
+    kraken.dev/crd-install: "true"
+  name: integrationscenarios.scheduler.kraken.dev
+spec:
+  group: scheduler.kraken.dev
+  names:
+    categories:
+      - all
+      - kraken
+      - integration
+      - scenario
+      - schedulers
+    kind: IntegrationScenario
+    plural: integrationscenarios
+  scope: Namespaced
+  subresources:
+    status: {}
+  additionalPrinterColumns:
+    - name: TenantId
+      type: string
+      JSONPath: ".spec.tenantId"
+    - name: RootObjectType
+      type: string
+      JSONPath: ".spec.rootObjectType"
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          properties:
+            tenantId:
+              type: string
+              minLength: 1
+            rootObjectType:
+              type: string
+              minLength: 1
+            domainExtractionParameters:
+              properties:
+                connectionType:
+                  type: string
+                entityGroupName:
+                  type: string
+                entitySetName:
+                  type: string
+                selectFields:
+                  type: string
+                paginationField:
+                  type: string
+                expandEntities:
+                  type: string
+                splitPacketsBy:
+                  type: string
+                isDeltaRelevant:
+                  type: string
+                isDeltaTimeRangeConsidered:
+                  type: string
+                domainExtractionStrategies:
+                  properties:
+                    filterStrategy:
+                      properties:
+                        isFilterEnabled:
+                          type: string
+                        filterByField:
+                          type: string
+                        filterByFieldExpectedValue:
+                          type: string
+                    groupingStrategy:
+                      properties:
+                        isGroupingEnabled:
+                          type: string
+                        groupByField:
+                          type: string
+                        groupByIdentifier:
+                          type: string
+                        groupByIdentifierExpectedValue:
+                          type: string
+                        groupOperatorType:
+                          type: string
+                additionalProperties:
+                  properties:
+                    sapClient:
+                      type: string
+                    sapLanguage:
+                      type: string
+                  type: object
+              type: object
+            frameworkParameters:
+              properties:
+                parallelism:
+                  type: string
+                noOfJobs:
+                  type: string
+                maxNoOfRecordsInEachPacket:
+                  type: string
+                isSourceApiSSLDisabled:
+                  type: string
+                deltaLoadThreshold:
+                  type: string
+                packetGenSchedule:
+                  type: string
+                jobProcessSchedule:
+                  type: string
+              type: object
+            resources:
+              properties:
+                limits:
+                  properties:
+                    cpu:
+                      type: string
+                    memory:
+                      type: string
+                  type: object
+                requests:
+                  properties:
+                    cpu:
+                      type: string
+                    memory:
+                      type: string
+                  type: object
+              type: object
+            serviceAccountName:
+              type: string
+          required:
+            - tenantId
+            - rootObjectType
+        status:
+          properties:
+            conditions:
+              items:
+                properties:
+                  lastTransitionTime:
+                    type: string
+                  message:
+                    type: string
+                  reason:
+                    type: string
+                  severity:
+                    type: string
+                  status:
+                    type: string
+                  type:
+                    type: string
+                required:
+                  - type
+                  - status
+                type: object
+              type: array
+            observedGeneration:
+              format: int64
+              type: integer
+          type: object
+  version: v1alpha1

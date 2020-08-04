@@ -1,3 +1,0 @@
-[1-test-plan]
-with-1-test-plan/kafka-test.jmx
-

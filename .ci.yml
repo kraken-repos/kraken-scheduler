@@ -1,46 +1,10 @@
 version: 2
 
-cache:
-- .gradle
-
 flow:
-  - name: build
-    runtime: gradle:6.2-jdk11
-    command:
-      - gradle -g .gradle clean build
-      - bash .ci/collectUnitTestResult_gradle.sh
-  - name: codecoverage
-    runtime: gradle:6.2-jdk11
-    command:
-      - gradle -g .gradle test jacocoTestReport
-      - bash .ci/tarAndUpload.sh 'kraken-scheduler' 'build/reports/jacoco/test/html' "$GIT_COMMIT/code_coverage" 'Code Coverage'
-      - gradle -g .gradle jacocoTestCoverageVerification
-#  - name: whitesource-scan
-#    type: eureka/piper-whitesource:v2
-#    timeout: 15m
-#    env:
-#      SCAN_TYPE: gradle # possibles options are: gradle, yarn, go
-  - name: kaniko-test-image
-    type: eureka/kaniko:v2
-    env:
-      DOCKERFILE: .ci/test/Dockerfile
-      CONTEXT: ./tests
-      IMAGE_NAME: kraken-scheduler-test
-      HELM_VALUES_FILE: .ci/charts/values.yaml
   - name: kaniko-app-image
     type: eureka/kaniko:v2
     env:
       DOCKERFILE: .ci/app/Dockerfile
-      CONTEXT: ./kraken-scheduler-application/build
+      CONTEXT: ./
       IMAGE_NAME: kraken-scheduler
       HELM_VALUES_FILE: .ci/charts/values.yaml
-  - name: helm
-    type: eureka/helm:v2
-    env:
-      CONTEXT: .ci/charts
-      SLOW_TEST: true
-# https://docs.eurekacloud.io/cicd-workflow/#deploy
-  - name: deploy
-    type: eureka/deploy:v1
-    env:
-      TARGET_LIST: template

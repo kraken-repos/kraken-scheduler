@@ -1,0 +1,31 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kraken-dev-integration-scheduler-controller
+  labels:
+    scheduler.kraken.dev/release: "v0.13.0"
+subjects:
+  - kind: ServiceAccount
+    name: integration-scheduler-manager
+    namespace: integration-framework
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kraken-dev-integration-scheduler-controller
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kraken-dev-integration-scheduler-addressable-resolver
+  labels:
+    scheduler.kraken.dev/release: "v0.13.0"
+subjects:
+  - kind: ServiceAccount
+    name: integration-scheduler-manager
+    namespace: integration-framework
+# An aggregated ClusterRole for all Addressable CRDs.
+# Ref: https://knative.dev/eventing/blob/master/config/200-addressable-resolvers-clusterrole.yaml
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: addressable-resolver
