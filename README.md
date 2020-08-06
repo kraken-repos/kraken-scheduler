@@ -13,3 +13,4 @@ Sample Product IntegrationScenario
 ==================================
 
 A sample `IntegrationScenario` for Product object replication is provided [here](sample/product-integration-scenario.yaml).
+
