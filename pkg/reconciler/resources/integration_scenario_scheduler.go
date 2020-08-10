@@ -147,6 +147,24 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs) []
 			Value: args.Scheduler.Spec.FrameworkParameters.DeltaLoadThreshold,
 		},
 		{
+			Name: "FRAMEWORK_PARAMS_EVENT_LOG_ENDPOINT",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: args.Scheduler.Spec.FrameworkParameters.EventLogEndpoint.SecretKeyRef,
+			},
+		},
+		{
+			Name: "FRAMEWORK_PARAMS_EVENT_LOG_USER",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: args.Scheduler.Spec.FrameworkParameters.EventLogUser.SecretKeyRef,
+			},
+		},
+		{
+			Name: "FRAMEWORK_PARAMS_EVENT_LOG_PASSWD",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: args.Scheduler.Spec.FrameworkParameters.EventLogPassword.SecretKeyRef,
+			},
+		},
+		{
 			Name:  "ADDL_PARAMS_SAP_CLIENT",
 			Value: args.Scheduler.Spec.DomainExtractionParameters.AdditionalProperties.SapClient,
 		},
@@ -265,10 +283,11 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs) []
 							ServiceAccountName: args.Scheduler.Spec.ServiceAccountName,
 							Containers: []corev1.Container{
 								{
-									Name:  	   strings.ToLower(args.Scheduler.Spec.RootObjectType) + "-producer",
-									Image: 	   args.WaitQueueProducerImage,
-									Env:   	   env,
-									Resources: res,
+									Name:  	   		 strings.ToLower(args.Scheduler.Spec.RootObjectType) + "-producer",
+									Image: 	   		 args.WaitQueueProducerImage,
+									ImagePullPolicy: "Always",
+									Env:   	   		 env,
+									Resources: 		 res,
 								},
 							},
 							ImagePullSecrets: []corev1.LocalObjectReference{
@@ -306,10 +325,11 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs) []
 							ServiceAccountName: args.Scheduler.Spec.ServiceAccountName,
 							Containers: []corev1.Container{
 								{
-									Name:  	   strings.ToLower(args.Scheduler.Spec.RootObjectType) + "-processor",
-									Image: 	   args.WaitQueueProcessorImage,
-									Env:   	   env,
-									Resources: res,
+									Name:  	   		 strings.ToLower(args.Scheduler.Spec.RootObjectType) + "-processor",
+									Image: 	   		 args.WaitQueueProcessorImage,
+									ImagePullPolicy: "Always",
+									Env:   	   		 env,
+									Resources: 		 res,
 								},
 							},
 							ImagePullSecrets: []corev1.LocalObjectReference{

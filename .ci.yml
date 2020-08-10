@@ -8,3 +8,19 @@ flow:
       CONTEXT: ./
       IMAGE_NAME: kraken-scheduler
       HELM_VALUES_FILE: .ci/charts/values.yaml
+
+  - name: helm
+    timeout: 10m
+    type: eureka/helm:v2
+    env:
+      CONTEXT: .ci/charts
+      SLOW_TEST: false
+
+  # https://docs.eurekacloud.io/cicd-workflow/#deploy
+  - name: deploy
+    type: eureka/deploy:v1
+    timeout: 10m
+    phases:
+      - mergedToDevelop
+    env:
+      TARGET_LIST: integration-controller

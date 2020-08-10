@@ -1,9 +1,0 @@
-ingress:
-  enabled: false
-
-prometheus:
-  enabled: false
-
-env:
-  jwt_enable: false
-

@@ -1,0 +1,79 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kraken-dev-integration-scheduler-controller
+  labels:
+    scheduler.kraken.dev/release: "v0.13.0"
+rules:
+- apiGroups:
+  - scheduler.kraken.dev
+  resources:
+  - integrationscenarios
+  - integrationscenarios/finalizers
+  verbs: &everything
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - scheduler.kraken.dev
+  resources:
+  - integrationscenarios/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
+  - batch
+  resources:
+  - cronjobs
+  - jobs
+  verbs: *everything
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs: *everything
+- apiGroups:
+  - eventing.knative.dev
+  resources:
+  - eventtypes
+  verbs: *everything
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  - endpoints
+  - persistentvolumeclaims
+  - events
+  - configmaps
+  - secrets
+  verbs: *everything
+- apiGroups:
+  - "coordination.k8s.io"
+  resources:
+  - leases
+  verbs: *everything
+---
+# The role is needed for the aggregated role source-observer in knative-eventing to provide readonly access to "Sources".
+# See https://github.com/knative/eventing/blob/master/config/200-source-observer-clusterrole.yaml.
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kraken-dev-integration-scheduler-observer
+  labels:
+    scheduler.kraken.dev/release: devel
+    duck.knative.dev/source: "true"
+rules:
+- apiGroups:
+  - "scheduler.kraken.dev"
+  resources:
+  - "integrationscenarios"
+  verbs:
+  - get
+  - list
+  - watch

@@ -86,6 +86,11 @@ func (r *Reconciler) ReconcileKind(ctx context.Context, src *v1alpha1.Integratio
 	return nil
 }
 
+func (r *Reconciler) FinalizeKind(ctx context.Context, src *v1alpha1.IntegrationScenario) pkgreconciler.Event {
+	logging.FromContext(ctx).Info("hit the finalizer on deletion" + src.Spec.RootObjectType)
+	return nil
+}
+
 func checkResourcesStatus(src *v1alpha1.IntegrationScenario) error {
 	for _, rsrc := range []struct {
 		key   string

@@ -167,6 +167,15 @@ type FrameworkParametersSpec struct {
 
 	// +required
 	OAuthScpClientSecret SecretValueFromSource `json:"oauthScpClientSecret"`
+
+	// +required
+	EventLogEndpoint SecretValueFromSource `json:"eventLogEndpoint"`
+
+	// +required
+	EventLogUser SecretValueFromSource `json:"eventLogUser"`
+
+	// +required
+	EventLogPassword SecretValueFromSource `json:"eventLogPassword"`
 }
 
 type IntegrationScenarioSpec struct {

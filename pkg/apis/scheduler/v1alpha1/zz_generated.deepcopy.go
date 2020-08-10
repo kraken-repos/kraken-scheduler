@@ -117,6 +117,9 @@ func (in *FrameworkParametersSpec) DeepCopyInto(out *FrameworkParametersSpec) {
 	in.OAuthScpPassword.DeepCopyInto(&out.OAuthScpPassword)
 	in.OAuthScpClientID.DeepCopyInto(&out.OAuthScpClientID)
 	in.OAuthScpClientSecret.DeepCopyInto(&out.OAuthScpClientSecret)
+	in.EventLogEndpoint.DeepCopyInto(&out.EventLogEndpoint)
+	in.EventLogUser.DeepCopyInto(&out.EventLogUser)
+	in.EventLogPassword.DeepCopyInto(&out.EventLogPassword)
 	return
 }
 
