@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: config-logging
-  namespace: integration-controller
+  namespace: integration-framework
 data:
   # Common configuration for all Knative codebase
   zap-logger-config: |
@@ -35,7 +35,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: config-observability
-  namespace: integration-controller
+  namespace: integration-framework
 data:
   _example: |
     ################################

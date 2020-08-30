@@ -11,6 +11,7 @@ import (
 	integrationscenarioinformer "kraken.dev/kraken-scheduler/pkg/client/injection/informers/scheduler/v1alpha1/integrationscenario"
 	kubeclient "knative.dev/pkg/client/injection/kube/client"
 	deploymentinformer "knative.dev/pkg/client/injection/kube/informers/batch/v1beta1/cronjob"
+	"kraken.dev/kraken-scheduler/pkg/monitor"
 	"os"
 
 	"knative.dev/pkg/controller"
@@ -60,5 +61,7 @@ func NewController(
 
 	cmw.Watch(logging.ConfigMapName(), c.UpdateFromLoggingConfigMap)
 	cmw.Watch(metrics.ConfigMapName(), c.UpdateFromMetricsConfigMap)
+
+	monitor.StartHTTPServer()
 	return impl
 }
