@@ -21,6 +21,8 @@ import (
 	reconcilerintegrationscenario "kraken.dev/kraken-scheduler/pkg/client/injection/reconciler/scheduler/v1alpha1/integrationscenario"
 	"kraken.dev/kraken-scheduler/pkg/client/clientset/versioned"
 	listers "kraken.dev/kraken-scheduler/pkg/client/listers/scheduler/v1alpha1"
+	"strings"
+	"time"
 )
 
 const (
@@ -76,6 +78,12 @@ var _ reconcilerintegrationscenario.Interface = (*Reconciler)(nil)
 func (r *Reconciler) ReconcileKind(ctx context.Context, src *v1alpha1.IntegrationScenario) pkgreconciler.Event {
 	src.Status.InitializeConditions()
 
+	logging.FromContext(ctx).Info("Register schema for Integration Scenario " + src.Spec.RootObjectType)
+	err := r.createSchemaRegistry(ctx, src)
+	if err != nil {
+		logging.FromContext(ctx).Error("error while creating Schema Registry", zap.Any("integrationScenarioScheduler", err))
+	}
+
 	integrationSchedulers, err := r.createIntegrationScenarioDeployers(ctx, src)
 	if err != nil {
 		logging.FromContext(ctx).Error("Unable to create the integration scenario schedulers", zap.Error(err))
@@ -88,6 +96,48 @@ func (r *Reconciler) ReconcileKind(ctx context.Context, src *v1alpha1.Integratio
 
 func (r *Reconciler) FinalizeKind(ctx context.Context, src *v1alpha1.IntegrationScenario) pkgreconciler.Event {
 	logging.FromContext(ctx).Info("hit the finalizer on deletion" + src.Spec.RootObjectType)
+
+	pods, err := r.KubeClientSet.CoreV1().Pods(src.Namespace).List(metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+	for _, pod := range pods.Items {
+		if strings.Contains(pod.Name, strings.ToLower(src.Spec.RootObjectType) + "-image-builder") ||
+			strings.Contains(pod.Name, strings.ToLower(src.Spec.RootObjectType) + "-schema-updater") ||
+			strings.Contains(pod.Name, "kraken-schema-validator-" + strings.ToLower(src.Spec.RootObjectType)) {
+			name := pod.Name
+			var gracePeriod int64 = 0
+			var deletePropagation = metav1.DeletePropagationForeground
+			err = r.KubeClientSet.CoreV1().Pods(src.Namespace).Delete(name, &metav1.DeleteOptions{
+				GracePeriodSeconds: &gracePeriod,
+				PropagationPolicy: &deletePropagation,
+			})
+			if err != nil {
+				logging.FromContext(ctx).Info("delete pod " + name + "for " + src.Spec.RootObjectType)
+				return err
+			}
+		}
+	}
+
+	cronJobs, err := r.KubeClientSet.BatchV1beta1().CronJobs(src.Namespace).List(metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+	for _, cronJob := range cronJobs.Items {
+		if strings.Contains(cronJob.Name, strings.ToLower(src.Spec.RootObjectType)) {
+			name := cronJob.Name
+			var gracePeriod int64 = 0
+			var deletePropagation = metav1.DeletePropagationForeground
+			err = r.KubeClientSet.BatchV1beta1().CronJobs(src.Namespace).Delete(name, &metav1.DeleteOptions{
+				GracePeriodSeconds: &gracePeriod,
+				PropagationPolicy: &deletePropagation,
+			})
+			if err != nil {
+				logging.FromContext(ctx).Info("delete cronJob " + name + "for " + src.Spec.RootObjectType)
+				return err
+			}
+		}
+	}
 	return nil
 }
 
@@ -144,6 +194,7 @@ func (r *Reconciler) createIntegrationScenarioDeployers(ctx context.Context, src
 		MetricsConfig: 			 metricsConfig,
 	}
 
+	logging.FromContext(ctx).Info("Deploying CronJobs for Integration Scenario " + src.Spec.RootObjectType)
 	expected := resources.MakeIntegrationScenarioScheduler(&integrationScenarioSchedulerArgs)
 
 	jobRunning := false
@@ -201,6 +252,180 @@ func (r *Reconciler) createIntegrationScenarioDeployers(ctx context.Context, src
 	}
 
 	return []batchv1beta1.CronJob{*waitQueueProducerScheduler, *waitQueueProcessorScheduler}, nil
+}
+
+func (r *Reconciler) createSchemaRegistry(ctx context.Context, src *v1alpha1.IntegrationScenario) error {
+	logging.FromContext(ctx).Info("Get ConfigMap for Integration Scenario " + src.Spec.RootObjectType)
+	configMap, err := r.KubeClientSet.CoreV1().ConfigMaps(src.Namespace).Get(strings.ToLower(src.Spec.RootObjectType) + "-schema", metav1.GetOptions{})
+
+	if err != nil {
+		return err
+	}
+
+	protoFile := configMap.Data[strings.ToLower(src.Spec.RootObjectType) + ".proto"]
+	protoValidateFile := configMap.Data[strings.ToLower(src.Spec.RootObjectType) + "-validate.proto"]
+	logging.FromContext(ctx).Info(protoFile)
+
+	env := []corev1.EnvVar{
+		{
+			Name:  "INTEGRATION_SCENARIO",
+			Value: src.Spec.RootObjectType,
+		},
+		{
+			Name:  "SCENARIO_SCHEMA",
+			Value: protoFile,
+		},
+		{
+			Name:  "SCENARIO_VALIDATION_SCHEMA",
+			Value: protoValidateFile,
+		},
+		{
+			Name:  "GIT_EMAIL",
+			Value: "sbcd90@gmail.com",
+		},
+		{
+			Name:  "GIT_NAME",
+			Value: "Subhobrata Dey",
+		},
+	}
+
+	logging.FromContext(ctx).Info("Create Schema Updater Pod for Integration Scenario " + src.Spec.RootObjectType)
+	schemaUpdaterPod := corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: strings.ToLower(src.Spec.RootObjectType) + "-schema-updater",
+		},
+		Spec: corev1.PodSpec{
+			RestartPolicy: "Never",
+			ServiceAccountName: src.Spec.ServiceAccountName,
+			Containers: []corev1.Container{
+				{
+					Name:  			 strings.ToLower(src.Spec.RootObjectType) + "-schema-updater",
+					Image: 			 "docker.io/sbcd90/schema-updater:latest",
+					ImagePullPolicy: "Always",
+					Env:  			 env,
+				},
+			},
+		},
+	}
+	_, err = r.KubeClientSet.CoreV1().Pods(src.Namespace).Create(&schemaUpdaterPod)
+	if err != nil {
+		return err
+	}
+	time.Sleep(1 * time.Minute)
+
+	logging.FromContext(ctx).Info("Create Image Builder Pod for Integration Scenario " + src.Spec.RootObjectType)
+	imageBuilderPod := corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: strings.ToLower(src.Spec.RootObjectType) + "-image-builder",
+		},
+		Spec: corev1.PodSpec{
+			RestartPolicy: "Never",
+			ServiceAccountName: src.Spec.ServiceAccountName,
+			Containers: []corev1.Container{
+				{
+					Name:  			 strings.ToLower(src.Spec.RootObjectType) + "-image-builder",
+					Image: 			 "gcr.io/kaniko-project/executor:latest",
+					ImagePullPolicy: "Always",
+					Args:  			 []string{
+						"--dockerfile=./Dockerfile",
+						"--context=git://github.com/sbcd90/kraken-schema-validator.git#refs/heads/" + src.Spec.RootObjectType,
+						"--destination=sbcd90/kraken-schema-validator-" + strings.ToLower(src.Spec.RootObjectType),
+					},
+					VolumeMounts: []corev1.VolumeMount {
+						{
+							Name: 	   "kaniko-secret",
+							MountPath: "/kaniko/.docker",
+						},
+					},
+				},
+			},
+			Volumes: []corev1.Volume {
+				{
+					Name: "kaniko-secret",
+					VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: "regcred",
+							Items: []corev1.KeyToPath {
+								{
+									Key: ".dockerconfigjson",
+									Path: "config.json",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	_, err = r.KubeClientSet.CoreV1().Pods(src.Namespace).Create(&imageBuilderPod)
+	if err != nil {
+		return err
+	}
+	time.Sleep(5 * time.Minute)
+
+	schemaValidatorEnv := []corev1.EnvVar{
+		{
+			Name: "KAFKA_BROKERS",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: src.Spec.FrameworkParameters.EventLogEndpoint.SecretKeyRef,
+			},
+		},
+		{
+			Name: "KAFKA_USERNAME",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: src.Spec.FrameworkParameters.EventLogUser.SecretKeyRef,
+			},
+		},
+		{
+			Name: "KAFKA_SECRET",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: src.Spec.FrameworkParameters.EventLogPassword.SecretKeyRef,
+			},
+		},
+		{
+			Name: "SCHEMA_REGISTRY_URL",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: src.Spec.FrameworkParameters.SchemaRegistryEndpoint.SecretKeyRef,
+			},
+		},
+		{
+			Name: "SCHEMA_REGISTRY_CREDS",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: src.Spec.FrameworkParameters.SchemaRegistryCreds.SecretKeyRef,
+			},
+		},
+		{
+			Name: "KAFKA_TOPIC",
+			Value: src.Spec.RootObjectType + "SchemaProcessingTopic",
+		},
+	}
+
+	logging.FromContext(ctx).Info("Create Schema Validator Pod for Integration Scenario " + src.Spec.RootObjectType)
+	schemaValidatorPod := corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "kraken-schema-validator-" + strings.ToLower(src.Spec.RootObjectType),
+		},
+		Spec: corev1.PodSpec{
+			RestartPolicy: "Never",
+			ServiceAccountName: src.Spec.ServiceAccountName,
+			Containers: []corev1.Container{
+				{
+					Name:  			 "kraken-schema-validator-" + strings.ToLower(src.Spec.RootObjectType),
+					Image: 			 "docker.io/sbcd90/kraken-schema-validator-" + strings.ToLower(src.Spec.RootObjectType) + ":latest",
+					ImagePullPolicy: "Always",
+					Env:  			 schemaValidatorEnv,
+				},
+			},
+		},
+	}
+	_, err = r.KubeClientSet.CoreV1().Pods(src.Namespace).Create(&schemaValidatorPod)
+	if err != nil {
+		return err
+	}
+	time.Sleep(1 * time.Minute)
+
+	return nil
 }
 
 func jobSpecChanged(oldJobSpec batchv1.JobSpec, newJobSpec batchv1.JobSpec) bool {

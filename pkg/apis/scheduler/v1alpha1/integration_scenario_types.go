@@ -176,6 +176,12 @@ type FrameworkParametersSpec struct {
 
 	// +required
 	EventLogPassword SecretValueFromSource `json:"eventLogPassword"`
+
+	// +required
+	SchemaRegistryEndpoint SecretValueFromSource `json:"schemaRegistryEndpoint"`
+
+	// +required
+	SchemaRegistryCreds SecretValueFromSource `json:"schemaRegistryCreds"`
 }
 
 type IntegrationScenarioSpec struct {

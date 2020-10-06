@@ -220,6 +220,43 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs) []
 		},
 	}
 
+	/*_ := []corev1.EnvVar{
+		{
+			Name: "KAFKA_BROKERS",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: args.Scheduler.Spec.FrameworkParameters.EventLogEndpoint.SecretKeyRef,
+			},
+		},
+		{
+			Name: "KAFKA_USERNAME",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: args.Scheduler.Spec.FrameworkParameters.EventLogUser.SecretKeyRef,
+			},
+		},
+		{
+			Name: "KAFKA_SECRET",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: args.Scheduler.Spec.FrameworkParameters.EventLogPassword.SecretKeyRef,
+			},
+		},
+		{
+			Name: "SCHEMA_REGISTRY_URL",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: args.Scheduler.Spec.FrameworkParameters.SchemaRegistryEndpoint.SecretKeyRef,
+			},
+		},
+		{
+			Name: "SCHEMA_REGISTRY_CREDS",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: args.Scheduler.Spec.FrameworkParameters.SchemaRegistryEndpoint.SecretKeyRef,
+			},
+		},
+		{
+			Name: "KAFKA_TOPIC",
+			Value: args.Scheduler.Spec.RootObjectType + "SchemaProcessingTopic",
+		},
+	}*/
+
 	RequestResourceCPU, err := resource.ParseQuantity(args.Scheduler.Spec.Resources.Requests.ResourceCPU)
 	if err != nil {
 		RequestResourceCPU = resource.MustParse("250m")
@@ -331,11 +368,21 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs) []
 									Env:   	   		 env,
 									Resources: 		 res,
 								},
+								/*{
+									Name:  	   		 "kraken-schema-validator-" + strings.ToLower(args.Scheduler.Spec.RootObjectType),
+									Image: 	   		 "docker.io/sbcd90/kraken-schema-validator-" + strings.ToLower(args.Scheduler.Spec.RootObjectType) + ":latest",
+									ImagePullPolicy: "Always",
+									Env:   	   		 sideCarEnv,
+									Resources: 		 res,
+								},*/
 							},
 							ImagePullSecrets: []corev1.LocalObjectReference{
 								{
 									Name: "docker-registry-secret",
 								},
+								/*{
+									Name: "regcred",
+								},*/
 							},
 						},
 					},

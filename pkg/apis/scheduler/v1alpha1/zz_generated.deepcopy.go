@@ -120,6 +120,8 @@ func (in *FrameworkParametersSpec) DeepCopyInto(out *FrameworkParametersSpec) {
 	in.EventLogEndpoint.DeepCopyInto(&out.EventLogEndpoint)
 	in.EventLogUser.DeepCopyInto(&out.EventLogUser)
 	in.EventLogPassword.DeepCopyInto(&out.EventLogPassword)
+	in.SchemaRegistryEndpoint.DeepCopyInto(&out.SchemaRegistryEndpoint)
+	in.SchemaRegistryCreds.DeepCopyInto(&out.SchemaRegistryCreds)
 	return
 }
 
