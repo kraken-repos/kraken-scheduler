@@ -7,7 +7,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: integration-scheduler-manager
-  namespace: integration-controller
+  namespace: integration-framework
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -22,7 +22,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: integration-scheduler-manager
-  namespace: integration-controller
+  namespace: integration-framework
 # An aggregated ClusterRole for all Addressable CRDs. 
 # Ref: https://knative.dev/eventing/blob/master/config/200-addressable-resolvers-clusterrole.yaml
 roleRef:
