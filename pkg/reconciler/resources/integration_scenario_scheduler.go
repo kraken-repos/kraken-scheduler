@@ -59,6 +59,10 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs) []
 			Value: args.Scheduler.Spec.RootObjectType,
 		},
 		{
+			Name:  "S4HANA_APP_TENANT_ID",
+			Value: args.Scheduler.Spec.AppTenantId,
+		},
+		{
 			Name:  "DOMAIN_EXTRACTOR_CONNECTION_TYPE",
 			Value: args.Scheduler.Spec.DomainExtractionParameters.ConnectionType,
 		},
