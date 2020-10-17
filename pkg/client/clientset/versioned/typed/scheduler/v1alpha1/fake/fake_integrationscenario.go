@@ -19,6 +19,8 @@ limitations under the License.
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -39,7 +41,7 @@ var integrationscenariosResource = schema.GroupVersionResource{Group: "scheduler
 var integrationscenariosKind = schema.GroupVersionKind{Group: "scheduler.kraken.dev", Version: "v1alpha1", Kind: "IntegrationScenario"}
 
 // Get takes name of the integrationScenario, and returns the corresponding integrationScenario object, and an error if there is any.
-func (c *FakeIntegrationScenarios) Get(name string, options v1.GetOptions) (result *v1alpha1.IntegrationScenario, err error) {
+func (c *FakeIntegrationScenarios) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.IntegrationScenario, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(integrationscenariosResource, c.ns, name), &v1alpha1.IntegrationScenario{})
 
@@ -50,7 +52,7 @@ func (c *FakeIntegrationScenarios) Get(name string, options v1.GetOptions) (resu
 }
 
 // List takes label and field selectors, and returns the list of IntegrationScenarios that match those selectors.
-func (c *FakeIntegrationScenarios) List(opts v1.ListOptions) (result *v1alpha1.IntegrationScenarioList, err error) {
+func (c *FakeIntegrationScenarios) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.IntegrationScenarioList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(integrationscenariosResource, integrationscenariosKind, c.ns, opts), &v1alpha1.IntegrationScenarioList{})
 
@@ -72,14 +74,14 @@ func (c *FakeIntegrationScenarios) List(opts v1.ListOptions) (result *v1alpha1.I
 }
 
 // Watch returns a watch.Interface that watches the requested integrationScenarios.
-func (c *FakeIntegrationScenarios) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeIntegrationScenarios) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(integrationscenariosResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a integrationScenario and creates it.  Returns the server's representation of the integrationScenario, and an error, if there is any.
-func (c *FakeIntegrationScenarios) Create(integrationScenario *v1alpha1.IntegrationScenario) (result *v1alpha1.IntegrationScenario, err error) {
+func (c *FakeIntegrationScenarios) Create(ctx context.Context, integrationScenario *v1alpha1.IntegrationScenario, opts v1.CreateOptions) (result *v1alpha1.IntegrationScenario, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(integrationscenariosResource, c.ns, integrationScenario), &v1alpha1.IntegrationScenario{})
 
@@ -90,7 +92,7 @@ func (c *FakeIntegrationScenarios) Create(integrationScenario *v1alpha1.Integrat
 }
 
 // Update takes the representation of a integrationScenario and updates it. Returns the server's representation of the integrationScenario, and an error, if there is any.
-func (c *FakeIntegrationScenarios) Update(integrationScenario *v1alpha1.IntegrationScenario) (result *v1alpha1.IntegrationScenario, err error) {
+func (c *FakeIntegrationScenarios) Update(ctx context.Context, integrationScenario *v1alpha1.IntegrationScenario, opts v1.UpdateOptions) (result *v1alpha1.IntegrationScenario, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(integrationscenariosResource, c.ns, integrationScenario), &v1alpha1.IntegrationScenario{})
 
@@ -102,7 +104,7 @@ func (c *FakeIntegrationScenarios) Update(integrationScenario *v1alpha1.Integrat
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeIntegrationScenarios) UpdateStatus(integrationScenario *v1alpha1.IntegrationScenario) (*v1alpha1.IntegrationScenario, error) {
+func (c *FakeIntegrationScenarios) UpdateStatus(ctx context.Context, integrationScenario *v1alpha1.IntegrationScenario, opts v1.UpdateOptions) (*v1alpha1.IntegrationScenario, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateSubresourceAction(integrationscenariosResource, "status", c.ns, integrationScenario), &v1alpha1.IntegrationScenario{})
 
@@ -113,7 +115,7 @@ func (c *FakeIntegrationScenarios) UpdateStatus(integrationScenario *v1alpha1.In
 }
 
 // Delete takes name of the integrationScenario and deletes it. Returns an error if one occurs.
-func (c *FakeIntegrationScenarios) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeIntegrationScenarios) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(integrationscenariosResource, c.ns, name), &v1alpha1.IntegrationScenario{})
 
@@ -121,15 +123,15 @@ func (c *FakeIntegrationScenarios) Delete(name string, options *v1.DeleteOptions
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeIntegrationScenarios) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(integrationscenariosResource, c.ns, listOptions)
+func (c *FakeIntegrationScenarios) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(integrationscenariosResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.IntegrationScenarioList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched integrationScenario.
-func (c *FakeIntegrationScenarios) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.IntegrationScenario, err error) {
+func (c *FakeIntegrationScenarios) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.IntegrationScenario, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(integrationscenariosResource, c.ns, name, pt, data, subresources...), &v1alpha1.IntegrationScenario{})
 

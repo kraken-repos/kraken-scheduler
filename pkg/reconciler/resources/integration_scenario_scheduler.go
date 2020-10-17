@@ -47,7 +47,7 @@ func SerializeArray(data []v1alpha1.DomainExtractionParametersSpec) string {
 	return string(jsonData)
 }
 
-func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs) []batchv1beta1.CronJob {
+func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs, currNs string, svcUrl string) []batchv1beta1.CronJob {
 
 	env := []corev1.EnvVar{
 		{
@@ -165,6 +165,10 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs) []
 			},
 		},
 		{
+			Name: "FRAMEWORK_PARAMS_SCHEMA_VALIDATOR_URL",
+			Value: svcUrl,
+		},
+		{
 			Name:  "ADDL_PARAMS_SAP_CLIENT",
 			Value: args.Scheduler.Spec.DomainExtractionParameters.AdditionalProperties.SapClient,
 		},
@@ -217,6 +221,10 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs) []
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: args.Scheduler.Spec.FrameworkParameters.OAuthScpClientSecret.SecretKeyRef,
 			},
+		},
+		{
+			Name: "FRAMEWORK_PARAMS_NAMESPACE",
+			Value: currNs,
 		},
 	}
 

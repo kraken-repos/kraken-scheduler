@@ -3,14 +3,15 @@ package scheduler
 import (
 	"context"
 	"k8s.io/client-go/tools/cache"
+	kubeclient "knative.dev/pkg/client/injection/kube/client"
+	deploymentinformer "knative.dev/pkg/client/injection/kube/informers/batch/v1beta1/cronjob"
 	"knative.dev/pkg/configmap"
 	"knative.dev/pkg/logging"
 	"knative.dev/pkg/metrics"
+	knservingclient "knative.dev/serving/pkg/client/injection/client"
 	"kraken.dev/kraken-scheduler/pkg/apis/scheduler/v1alpha1"
 	integrationscenarioclient "kraken.dev/kraken-scheduler/pkg/client/injection/client"
 	integrationscenarioinformer "kraken.dev/kraken-scheduler/pkg/client/injection/informers/scheduler/v1alpha1/integrationscenario"
-	kubeclient "knative.dev/pkg/client/injection/kube/client"
-	deploymentinformer "knative.dev/pkg/client/injection/kube/informers/batch/v1beta1/cronjob"
 	"kraken.dev/kraken-scheduler/pkg/monitor"
 	"os"
 
@@ -35,17 +36,25 @@ func NewController(
 		return nil
 	}
 
+	schemaRegistryStoreCreds, defined := os.LookupEnv(schemaRegistryStoreCredsEnvVar)
+	if !defined {
+		logging.FromContext(ctx).Errorf("required environment variable '%s' not defined", schemaRegistryStoreCredsEnvVar)
+		return nil
+	}
+
 	integrationScenarioInformer := integrationscenarioinformer.Get(ctx)
 	deploymentInformer := deploymentinformer.Get(ctx)
 
 	c := &Reconciler{
-		KubeClientSet: 	   		 kubeclient.Get(ctx),
-		scenarioClientSet: 		 integrationscenarioclient.Get(ctx),
-		scenarioLister:    		 integrationScenarioInformer.Lister(),
-		deploymentLister:  		 deploymentInformer.Lister(),
-		waitQueueProducerImage:  wQProducerImage,
-		waitQueueProcessorImage: wQProcessorImage,
-		loggingContext:			 ctx,
+		KubeClientSet: 	   		  kubeclient.Get(ctx),
+		KnServingClientSet:  	  knservingclient.Get(ctx),
+		scenarioClientSet: 		  integrationscenarioclient.Get(ctx),
+		scenarioLister:    		  integrationScenarioInformer.Lister(),
+		deploymentLister:  		  deploymentInformer.Lister(),
+		waitQueueProducerImage:   wQProducerImage,
+		waitQueueProcessorImage:  wQProcessorImage,
+		schemaRegistryStoreCreds: schemaRegistryStoreCreds,
+		loggingContext:			  ctx,
 	}
 
 	impl := integrationscenario.NewImpl(ctx, c)

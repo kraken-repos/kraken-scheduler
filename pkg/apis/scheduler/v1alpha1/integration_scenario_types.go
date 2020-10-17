@@ -71,6 +71,13 @@ type DomainExtractionStrategiesSpec struct {
 	GroupingStrategy DomainExtractionGroupingStrategySpec `json:"groupingStrategy"`
 }
 
+type DomainSchemaRegistrySpec struct {
+	// +required
+	SchemaRegistryRequired string `json:"schemaRegistryRequired"`
+	// +required
+	SchemaValidatorGenRequired string `json:"schemaValidatorGenRequired"`
+}
+
 type DomainExtractionParametersSpec struct {
 	// ConnectionType is the mode to fetch data from S/4Hana source system.
 	// +required
@@ -116,6 +123,9 @@ type DomainExtractionParametersSpec struct {
 	// DomainExtractionStrategies defines different extraction strategies for fetching data from S/4Hana source system.
 	// +required
 	DomainExtractionStrategies DomainExtractionStrategiesSpec `json:"domainExtractionStrategies"`
+
+	// +required
+	DomainSchemaRegistryProps DomainSchemaRegistrySpec `json:"domainSchemaRegistryProps"`
 
 	// +optional
 	AdditionalProperties AdditionalProperties `json:"additionalProperties,omitempty"`
@@ -236,6 +246,10 @@ type IntegrationScenarioStatus struct {
 	// * ObservedGeneration - the 'Generation' of the Service that was last processed by the controller.
 	// * Conditions - the latest available observations of a resource's current state.
 	duckv1.Status `json:",inline"`
+}
+
+func (s *IntegrationScenario) GetStatus() *duckv1.Status {
+	return &s.Status.Status
 }
 
 func (s *IntegrationScenario) GetGroupVersionKind() schema.GroupVersionKind {
