@@ -203,6 +203,9 @@ type IntegrationScenarioSpec struct {
 	// +required
 	RootObjectType string `json:"rootObjectType"`
 
+	// +optional
+	AppTenantId string `json:"appTenantId"`
+
 	// +required
 	DomainExtractionParameters DomainExtractionParametersSpec `json:"domainExtractionParameters"`
 
