@@ -443,7 +443,7 @@ func (r *Reconciler) createSchemaRegistry(ctx context.Context, src *v1alpha1.Int
 		},
 		{
 			Name: "KAFKA_TOPIC",
-			Value: src.Spec.RootObjectType + "SchemaProcessingTopic",
+			Value: src.Spec.RootObjectType + "ProcessingTopic",
 		},
 	}
 
