@@ -19,6 +19,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"context"
 	time "time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -61,13 +62,13 @@ func NewFilteredIntegrationScenarioInformer(client versioned.Interface, namespac
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.SchedulerV1alpha1().IntegrationScenarios(namespace).List(options)
+				return client.SchedulerV1alpha1().IntegrationScenarios(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.SchedulerV1alpha1().IntegrationScenarios(namespace).Watch(options)
+				return client.SchedulerV1alpha1().IntegrationScenarios(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&schedulerv1alpha1.IntegrationScenario{},

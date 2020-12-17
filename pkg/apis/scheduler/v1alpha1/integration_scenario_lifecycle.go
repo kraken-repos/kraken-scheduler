@@ -1,8 +1,8 @@
 package v1alpha1
 
 import (
-	"knative.dev/pkg/apis"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
+	"knative.dev/pkg/apis"
 )
 
 const (
@@ -14,6 +14,10 @@ const (
 var IntegrationScenarioCondSet = apis.NewLivingConditionSet(
 	IntegrationScenarioConditionDeployed,
 )
+
+func (s *IntegrationScenario) GetConditionSet() apis.ConditionSet {
+	return IntegrationScenarioCondSet
+}
 
 func (s *IntegrationScenarioStatus) GetCondition(t apis.ConditionType) *apis.Condition {
 	return IntegrationScenarioCondSet.Manage(s).GetCondition(t)

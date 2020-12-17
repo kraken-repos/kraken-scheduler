@@ -37,6 +37,9 @@ spec:
             rootObjectType:
               type: string
               minLength: 1
+            appTenantId:
+              type: string
+              minLength: 1
             domainExtractionParameters:
               properties:
                 connectionType:
@@ -79,6 +82,12 @@ spec:
                           type: string
                         groupOperatorType:
                           type: string
+                domainSchemaRegistryProps:
+                  properties:
+                    schemaRegistryRequired:
+                      type: string
+                    schemaValidatorGenRequired: 
+                      type: string
                 additionalProperties:
                   properties:
                     sapClient:
@@ -135,6 +144,14 @@ spec:
                   properties:
                     secretKeyRef:
                       type: object
+                schemaRegistryEndpoint:
+                  properties:
+                    secretKeyRef:
+                      type: object
+                schemaRegistryCreds:
+                  properties:
+                    secretKeyRef:
+                      type: object      
               type: object
             resources:
               properties:

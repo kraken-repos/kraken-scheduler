@@ -8,7 +8,7 @@ export REPO_ROOT_DIR=$(dirname $0)/..
 
 CODEGEN_PKG=${CODEGEN_PKG:-$(cd ${REPO_ROOT_DIR}; ls -d -1 ./vendor/k8s.io/code-generator 2>/dev/null || echo ../../../k8s.io/code-generator)}
 
-KNATIVE_CODEGEN_PKG=${KNATIVE_CODEGEN_PKG:-$(cd ${REPO_ROOT_DIR}; ls -d -1 ./vendor/knative.dev/pkg 2>/dev/null || echo ../pkg)}
+KNATIVE_CODEGEN_PKG=${KNATIVE_CODEGEN_PKG:-$(cd ${REPO_ROOT_DIR}; ls -d -1 . 2>/dev/null || echo ../pkg)}
 
 # Scheduler
 API_DIRS_SOURCES=(pkg)
@@ -37,4 +37,4 @@ ${GOPATH}/bin/deepcopy-gen \
   -i kraken.dev/kraken-scheduler/pkg/apis \
 
 # Make sure our dependencies are up-to-date
-${REPO_ROOT_DIR}/hack/update-deps.sh
+#${REPO_ROOT_DIR}/hack/update-deps.sh

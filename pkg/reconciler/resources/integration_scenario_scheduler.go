@@ -47,7 +47,7 @@ func SerializeArray(data []v1alpha1.DomainExtractionParametersSpec) string {
 	return string(jsonData)
 }
 
-func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs) []batchv1beta1.CronJob {
+func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs, currNs string, svcUrl string, redisIp string) []batchv1beta1.CronJob {
 
 	env := []corev1.EnvVar{
 		{
@@ -169,6 +169,14 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs) []
 			},
 		},
 		{
+			Name: "FRAMEWORK_PARAMS_SCHEMA_VALIDATOR_URL",
+			Value: svcUrl,
+		},
+		{
+			Name: "FRAMEWORK_PARAMS_REDIS_IP",
+			Value: redisIp,
+		},
+		{
 			Name:  "ADDL_PARAMS_SAP_CLIENT",
 			Value: args.Scheduler.Spec.DomainExtractionParameters.AdditionalProperties.SapClient,
 		},
@@ -222,7 +230,48 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs) []
 				SecretKeyRef: args.Scheduler.Spec.FrameworkParameters.OAuthScpClientSecret.SecretKeyRef,
 			},
 		},
+		{
+			Name: "FRAMEWORK_PARAMS_NAMESPACE",
+			Value: currNs,
+		},
 	}
+
+	/*_ := []corev1.EnvVar{
+		{
+			Name: "KAFKA_BROKERS",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: args.Scheduler.Spec.FrameworkParameters.EventLogEndpoint.SecretKeyRef,
+			},
+		},
+		{
+			Name: "KAFKA_USERNAME",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: args.Scheduler.Spec.FrameworkParameters.EventLogUser.SecretKeyRef,
+			},
+		},
+		{
+			Name: "KAFKA_SECRET",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: args.Scheduler.Spec.FrameworkParameters.EventLogPassword.SecretKeyRef,
+			},
+		},
+		{
+			Name: "SCHEMA_REGISTRY_URL",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: args.Scheduler.Spec.FrameworkParameters.SchemaRegistryEndpoint.SecretKeyRef,
+			},
+		},
+		{
+			Name: "SCHEMA_REGISTRY_CREDS",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: args.Scheduler.Spec.FrameworkParameters.SchemaRegistryEndpoint.SecretKeyRef,
+			},
+		},
+		{
+			Name: "KAFKA_TOPIC",
+			Value: args.Scheduler.Spec.RootObjectType + "SchemaProcessingTopic",
+		},
+	}*/
 
 	RequestResourceCPU, err := resource.ParseQuantity(args.Scheduler.Spec.Resources.Requests.ResourceCPU)
 	if err != nil {
@@ -335,11 +384,21 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs) []
 									Env:   	   		 env,
 									Resources: 		 res,
 								},
+								/*{
+									Name:  	   		 "kraken-schema-validator-" + strings.ToLower(args.Scheduler.Spec.RootObjectType),
+									Image: 	   		 "docker.io/sbcd90/kraken-schema-validator-" + strings.ToLower(args.Scheduler.Spec.RootObjectType) + ":latest",
+									ImagePullPolicy: "Always",
+									Env:   	   		 sideCarEnv,
+									Resources: 		 res,
+								},*/
 							},
 							ImagePullSecrets: []corev1.LocalObjectReference{
 								{
 									Name: "docker-registry-secret",
 								},
+								/*{
+									Name: "regcred",
+								},*/
 							},
 						},
 					},

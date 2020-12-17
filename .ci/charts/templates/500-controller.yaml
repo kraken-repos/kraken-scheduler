@@ -18,7 +18,7 @@ spec:
       serviceAccountName: integration-scheduler-manager
       containers:
       - name: manager
-        image: harbor.eurekacloud.io/eureka/kraken-scheduler-controller-bc8b21eb9284f18ede3d1b99597b72f1:latest
+        image: docker.io/sbcd90/kraken-scheduler-controller-cb08c04a0b73c7b0de5fe0905510ed76:latest
         env:
         - name: SYSTEM_NAMESPACE
           valueFrom:
@@ -31,15 +31,18 @@ spec:
         - name: CONFIG_LEADERELECTION_NAME
           value: config-leader-election-integration-scheduler
         - name: WAITQUEUE_PRODUCER_IMAGE
-          value: harbor.eurekacloud.io/eureka/kraken-waitqueue-producer:latest
+          value: harbor.eurekacloud.io/eureka/kraken-waitqueue-producer:31426118153dfe1c04e8d1c8232bb7d95ede5ebe
         - name: WAITQUEUE_PROCESSOR_IMAGE
-          value: harbor.eurekacloud.io/eureka/kraken-waitqueue-processor:latest
+          value: harbor.eurekacloud.io/eureka/kraken-waitqueue-processor:31426118153dfe1c04e8d1c8232bb7d95ede5ebe
+        - name: SCHEMA_REGISTRY_STORE_CREDS
+          valueFrom:
+            secretKeyRef:
+              name: schema-registry-secret
+              key: storeCreds  
         volumeMounts:
         resources:
           requests:
             cpu: 20m
             memory: 20Mi
-      imagePullSecrets:
-      - name: docker-registry-secret
       serviceAccount: integration-scheduler-manager
       terminationGracePeriodSeconds: 10
