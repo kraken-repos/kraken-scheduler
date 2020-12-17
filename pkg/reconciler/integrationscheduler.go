@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"go.uber.org/zap"
 	batchv1 "k8s.io/api/batch/v1"
@@ -13,15 +14,21 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	batchv1beta1Listers "k8s.io/client-go/listers/batch/v1beta1"
+	duckv1 "knative.dev/pkg/apis/duck/v1"
+	eventingkafkav1beta1 "knative.dev/eventing-kafka/pkg/apis/sources/v1beta1"
+	bindingskafkav1beta1 "knative.dev/eventing-kafka/pkg/apis/bindings/v1beta1"
+	knEventingKafkaClientSet "knative.dev/eventing-kafka/pkg/client/clientset/versioned"
 	"knative.dev/pkg/logging"
 	"knative.dev/pkg/metrics"
 	pkgreconciler "knative.dev/pkg/reconciler"
 	servingv1 "knative.dev/serving/pkg/apis/serving/v1"
 	knservingversioned "knative.dev/serving/pkg/client/clientset/versioned"
 	"kraken.dev/kraken-scheduler/pkg/apis/scheduler/v1alpha1"
+	"kraken.dev/kraken-scheduler/pkg/cache"
 	"kraken.dev/kraken-scheduler/pkg/client/clientset/versioned"
 	reconcilerintegrationscenario "kraken.dev/kraken-scheduler/pkg/client/injection/reconciler/scheduler/v1alpha1/integrationscenario"
 	listers "kraken.dev/kraken-scheduler/pkg/client/listers/scheduler/v1alpha1"
+	"kraken.dev/kraken-scheduler/pkg/messagebroker"
 	"kraken.dev/kraken-scheduler/pkg/reconciler/resources"
 	"strconv"
 	"strings"
@@ -64,6 +71,7 @@ type Reconciler struct {
 	// KubeClientSet allows us to talk to the k8s for core APIs
 	KubeClientSet 	   kubernetes.Interface
 	KnServingClientSet knservingversioned.Interface
+	KnEventingKafkaClientSet knEventingKafkaClientSet.Interface
 
 	waitQueueProducerImage   string
 	waitQueueProcessorImage  string
@@ -85,6 +93,11 @@ var _ reconcilerintegrationscenario.Interface = (*Reconciler)(nil)
 func (r *Reconciler) ReconcileKind(ctx context.Context, src *v1alpha1.IntegrationScenario) pkgreconciler.Event {
 	src.Status.InitializeConditions()
 
+	err := r.provisionKafkaTopic(ctx, src)
+	if err != nil {
+		logging.FromContext(ctx).Error("error while creating Kafka Topics", zap.Any("integrationScenarioScheduler", err))
+	}
+
 	schemaRegistryRequired, err := strconv.ParseBool(src.Spec.DomainExtractionParameters.DomainSchemaRegistryProps.SchemaRegistryRequired)
 
 	svcUrl := ""
@@ -96,7 +109,20 @@ func (r *Reconciler) ReconcileKind(ctx context.Context, src *v1alpha1.Integratio
 		}
 	}
 
-	integrationSchedulers, err := r.createIntegrationScenarioDeployers(ctx, svcUrl, src)
+	err = r.createTransformer(ctx, src)
+	if err != nil {
+		logging.FromContext(ctx).Error("Unable to create the Kraken Transformer", zap.Error(err))
+		return err
+	}
+
+	err = r.createKafkaSource(ctx, src)
+	if err != nil {
+		logging.FromContext(ctx).Error("Unable to create the Knative Kafka Source", zap.Error(err))
+		return err
+	}
+
+	redis := r.getRedisExternalIp(ctx, src)
+	integrationSchedulers, err := r.createIntegrationScenarioDeployers(ctx, svcUrl, redis, src)
 	if err != nil {
 		logging.FromContext(ctx).Error("Unable to create the integration scenario schedulers", zap.Error(err))
 		return err
@@ -104,6 +130,78 @@ func (r *Reconciler) ReconcileKind(ctx context.Context, src *v1alpha1.Integratio
 	src.Status.MarkDeployed(integrationSchedulers)
 
 	return nil
+}
+
+func (r *Reconciler) getKafkaSecret(ctx context.Context, src *v1alpha1.IntegrationScenario) (*corev1.Secret, error) {
+	brokerSecretName := src.Spec.FrameworkParameters.EventLogEndpoint.SecretKeyRef.Name
+
+	secret, err := r.KubeClientSet.CoreV1().Secrets(src.Namespace).Get(ctx, brokerSecretName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return secret, nil
+}
+
+func (r *Reconciler) provisionKafkaTopic(ctx context.Context, src *v1alpha1.IntegrationScenario) error {
+	brokerSecretKey := src.Spec.FrameworkParameters.EventLogEndpoint.SecretKeyRef.Key
+	userSecretKey := src.Spec.FrameworkParameters.EventLogUser.SecretKeyRef.Key
+	pwdSecretKey := src.Spec.FrameworkParameters.EventLogPassword.SecretKeyRef.Key
+
+	secret, err := r.getKafkaSecret(ctx, src)
+	if err != nil {
+		return err
+	}
+
+	kafkaClient := messagebroker.KafkaClient{
+		BootstrapServers: string(secret.Data[brokerSecretKey]),
+		SASLUser: string(secret.Data[userSecretKey]),
+		SASLPassword: string(secret.Data[pwdSecretKey]),
+	}
+
+	kafkaClient.Initialize(ctx)
+	if kafkaClient.AdminClient != nil {
+		defer kafkaClient.AdminClient.Close()
+	}
+
+	kafkaClient.CreateTopic(ctx, src.Spec.RootObjectType)
+
+	return nil
+}
+
+func (r *Reconciler) removeKafkaTopic(ctx context.Context, src *v1alpha1.IntegrationScenario) error {
+	brokerSecretName := src.Spec.FrameworkParameters.EventLogEndpoint.SecretKeyRef.Name
+	brokerSecretKey := src.Spec.FrameworkParameters.EventLogEndpoint.SecretKeyRef.Key
+	userSecretKey := src.Spec.FrameworkParameters.EventLogUser.SecretKeyRef.Key
+	pwdSecretKey := src.Spec.FrameworkParameters.EventLogPassword.SecretKeyRef.Key
+
+	secret, err := r.KubeClientSet.CoreV1().Secrets(src.Namespace).Get(ctx, brokerSecretName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	kafkaClient := messagebroker.KafkaClient{
+		BootstrapServers: string(secret.Data[brokerSecretKey]),
+		SASLUser: string(secret.Data[userSecretKey]),
+		SASLPassword: string(secret.Data[pwdSecretKey]),
+	}
+
+	kafkaClient.Initialize(ctx)
+	if kafkaClient.AdminClient != nil {
+		defer kafkaClient.AdminClient.Close()
+	}
+
+	kafkaClient.DeleteTopic(ctx, src.Spec.RootObjectType)
+
+	return nil
+}
+
+func (r *Reconciler) getRedisExternalIp(ctx context.Context, src *v1alpha1.IntegrationScenario) string {
+	redisSvc, err := r.KubeClientSet.CoreV1().Services(src.Namespace).Get(ctx, "redis", metav1.GetOptions{})
+	if err != nil {
+		return ""
+	}
+	return redisSvc.Spec.ClusterIP
 }
 
 func (r *Reconciler) FinalizeKind(ctx context.Context, src *v1alpha1.IntegrationScenario) pkgreconciler.Event {
@@ -172,6 +270,44 @@ func (r *Reconciler) FinalizeKind(ctx context.Context, src *v1alpha1.Integration
 			}
 		}
 	}
+
+	err = r.deleteKafkaSource(ctx, src)
+	if err != nil {
+		return err
+	}
+
+	err = r.deleteTransformer(ctx, src)
+	if err != nil {
+		return err
+	}
+
+	err = r.removeKafkaTopic(ctx, src)
+	if err != nil {
+		return err
+	}
+
+	err = r.RemoveRedisQueues(ctx, src)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *Reconciler) RemoveRedisQueues(ctx context.Context, src *v1alpha1.IntegrationScenario) error {
+	client := cache.Client{
+		Host: "redis." + src.Namespace + ".svc.cluster.local",
+		Port: "6379",
+	}
+
+	keys := []string{"k8swaitqueue-" + src.Spec.RootObjectType, "k8sworkqueue-" + src.Spec.RootObjectType}
+
+	err := client.DeleteKeysFromCache(ctx, keys)
+	if err != nil {
+		logging.FromContext(ctx).Info("cannot delete redis objects for " + src.Spec.RootObjectType)
+		return err
+	}
+
 	return nil
 }
 
@@ -204,17 +340,17 @@ func checkResourcesStatus(src *v1alpha1.IntegrationScenario) error {
 	return nil
 }
 
-func (r *Reconciler) createIntegrationScenarioDeployers(ctx context.Context, svcUrl string, src *v1alpha1.IntegrationScenario) ([]batchv1beta1.CronJob, error) {
+func (r *Reconciler) createIntegrationScenarioDeployers(ctx context.Context, svcUrl string, redisIp string, src *v1alpha1.IntegrationScenario) ([]batchv1beta1.CronJob, error) {
 	if err := checkResourcesStatus(src); err != nil {
 		return nil, err
 	}
 
-	loggingConfig, err := logging.LoggingConfigToJson(r.loggingConfig)
+	loggingConfig, err := logging.ConfigToJSON(r.loggingConfig)
 	if err != nil {
 		logging.FromContext(ctx).Error("error while converting logging config to JSON", zap.Any("integrationScenarioScheduler", err))
 	}
 
-	metricsConfig, err := metrics.MetricsOptionsToJson(r.metricsConfig)
+	metricsConfig, err := metrics.OptionsToJSON(r.metricsConfig)
 	if err != nil {
 		logging.FromContext(ctx).Error("error while converting metrics config to JSON", zap.Any("integrationScenarioScheduler", err))
 	}
@@ -229,7 +365,7 @@ func (r *Reconciler) createIntegrationScenarioDeployers(ctx context.Context, svc
 	}
 
 	logging.FromContext(ctx).Info("Deploying CronJobs for Integration Scenario " + src.Spec.RootObjectType)
-	expected := resources.MakeIntegrationScenarioScheduler(&integrationScenarioSchedulerArgs, src.Namespace, svcUrl)
+	expected := resources.MakeIntegrationScenarioScheduler(&integrationScenarioSchedulerArgs, src.Namespace, svcUrl, redisIp)
 
 	jobRunning := false
 
@@ -242,6 +378,7 @@ func (r *Reconciler) createIntegrationScenarioDeployers(ctx context.Context, svc
 		}
 	}
 
+//	time.Sleep(5 * time.Minute)
 	waitQueueProcessorScheduler, err := r.KubeClientSet.BatchV1beta1().CronJobs(src.Namespace).Get(ctx, expected[1].Name, metav1.GetOptions{})
 	if err == nil {
 		jobRunning = true
@@ -498,7 +635,7 @@ func (r *Reconciler) createSchemaRegistry(ctx context.Context, src *v1alpha1.Int
 	if err != nil {
 		return "", err
 	}
-	time.Sleep(1 * time.Minute)
+	time.Sleep(2 * time.Minute)
 
 	schemaValidatorSvc, err :=
 		r.KubeClientSet.CoreV1().Services(src.Namespace).Get(ctx, "kraken-schema-validator-" + strings.ToLower(src.Spec.RootObjectType),
@@ -509,6 +646,191 @@ func (r *Reconciler) createSchemaRegistry(ctx context.Context, src *v1alpha1.Int
 
 	logging.FromContext(ctx).Info("service ->" + schemaValidatorSvc.Spec.ExternalName, "")
 	return schemaValidatorSvc.Spec.ExternalName, nil
+}
+
+func (r *Reconciler) deleteTransformer(ctx context.Context, src *v1alpha1.IntegrationScenario) error {
+	logging.FromContext(ctx).Info("Delete Kraken Transformer")
+
+	serviceList, err := r.KnServingClientSet.ServingV1().Services(src.Namespace).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+
+	for _, service := range serviceList.Items {
+		if strings.Contains(service.Name, strings.ToLower(src.Spec.RootObjectType) + "-integration-transformer") {
+			err = r.KnServingClientSet.ServingV1().Services(src.Namespace).Delete(ctx, service.Name, metav1.DeleteOptions{})
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (r *Reconciler) createTransformer(ctx context.Context, src *v1alpha1.IntegrationScenario) error {
+	logging.FromContext(ctx).Info("Create Kraken Transformer")
+
+	transformerEnv := []corev1.EnvVar{
+		{
+			Name: "KAFKA_HOST",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: src.Spec.FrameworkParameters.EventLogEndpoint.SecretKeyRef,
+			},
+		},
+		{
+			Name: "KAFKA_USER",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: src.Spec.FrameworkParameters.EventLogUser.SecretKeyRef,
+			},
+		},
+		{
+			Name: "KAFKA_PASSWD",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: src.Spec.FrameworkParameters.EventLogPassword.SecretKeyRef,
+			},
+		},
+	}
+
+	transformerPod := servingv1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: strings.ToLower(src.Spec.RootObjectType) + "-integration-transformer",
+		},
+		Spec: servingv1.ServiceSpec{
+			ConfigurationSpec: servingv1.ConfigurationSpec{
+				Template: servingv1.RevisionTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"autoscaling.knative.dev/class": "kpa.autoscaling.knative.dev",
+							"autoscaling.knative.dev/metric": "concurrency",
+							"autoscaling.knative.dev/target": "1",
+							"autoscaling.knative.dev/minScale": "0",
+							"autoscaling.knative.dev/maxScale": src.Spec.FrameworkParameters.Parallelism,
+						},
+					},
+					Spec: servingv1.RevisionSpec{
+						PodSpec: corev1.PodSpec{
+							ServiceAccountName: src.Spec.ServiceAccountName,
+							Containers: []corev1.Container{
+								{
+									Name:            strings.ToLower(src.Spec.RootObjectType) + "-integration-transformer",
+									Image:           "harbor.eurekacloud.io/eureka/kraken-transformer-validator:latest",
+									ImagePullPolicy: "Always",
+									Env:             transformerEnv,
+								},
+							},
+							ImagePullSecrets: []corev1.LocalObjectReference{
+								{
+									Name: "docker-registry-secret",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	_, err := r.KnServingClientSet.ServingV1().Services(src.Namespace).Create(ctx, &transformerPod, metav1.CreateOptions{})
+	return err
+}
+
+func (r *Reconciler) deleteKafkaSource(ctx context.Context, src *v1alpha1.IntegrationScenario) error {
+	logging.FromContext(ctx).Info("Delete Knative Kafka Source")
+
+	kafkaSourceList, err :=
+		r.KnEventingKafkaClientSet.SourcesV1beta1().KafkaSources(src.Namespace).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+
+	for _, kafkaSource := range kafkaSourceList.Items {
+		if strings.Contains(kafkaSource.Name,
+			strings.ToLower(src.Spec.RootObjectType) + "-kafka-source") {
+			err = r.KnEventingKafkaClientSet.SourcesV1beta1().KafkaSources(src.Namespace).Delete(ctx, kafkaSource.Name, metav1.DeleteOptions{})
+
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (r *Reconciler) createKafkaSource(ctx context.Context, src *v1alpha1.IntegrationScenario) error {
+	logging.FromContext(ctx).Info("Create Knative Kafka Source")
+	brokerSecretName := src.Spec.FrameworkParameters.EventLogEndpoint.SecretKeyRef.Name
+
+	brokerSecretKey := src.Spec.FrameworkParameters.EventLogEndpoint.SecretKeyRef.Key
+	userSecretKey := src.Spec.FrameworkParameters.EventLogUser.SecretKeyRef.Key
+	pwdSecretKey := src.Spec.FrameworkParameters.EventLogPassword.SecretKeyRef.Key
+
+	secret, err := r.getKafkaSecret(ctx, src)
+	if err != nil {
+		return err
+	}
+
+	parallelism, _ := strconv.Atoi(src.Spec.FrameworkParameters.Parallelism)
+	if parallelism%2 == 0 {
+		parallelism = parallelism/2
+	}
+
+	for instance := 1; instance <= parallelism; instance++ {
+		kafkaSourcePod := eventingkafkav1beta1.KafkaSource{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: strings.ToLower(src.Spec.RootObjectType) + "-kafka-source",
+			},
+			Spec: eventingkafkav1beta1.KafkaSourceSpec{
+				ConsumerGroup: src.Spec.RootObjectType + "ProcessingTopic",
+				Topics: []string{src.Spec.RootObjectType + "ProcessingTopic"},
+				KafkaAuthSpec: bindingskafkav1beta1.KafkaAuthSpec{
+					BootstrapServers: []string{string(secret.Data[brokerSecretKey])},
+					Net: bindingskafkav1beta1.KafkaNetSpec{
+						SASL: bindingskafkav1beta1.KafkaSASLSpec{
+							Enable: true,
+							User: bindingskafkav1beta1.SecretValueFromSource{
+								SecretKeyRef: &corev1.SecretKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: brokerSecretName,
+									},
+									Key: userSecretKey,
+								},
+							},
+							Password: bindingskafkav1beta1.SecretValueFromSource{
+								SecretKeyRef: &corev1.SecretKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: brokerSecretName,
+									},
+									Key: pwdSecretKey,
+								},
+							},
+						},
+						TLS: bindingskafkav1beta1.KafkaTLSSpec{
+							Enable: true,
+						},
+					},
+				},
+				SourceSpec: duckv1.SourceSpec{
+					Sink: duckv1.Destination{
+						Ref: &duckv1.KReference{
+							APIVersion: "serving.knative.dev/v1",
+							Kind: "Service",
+							Name: strings.ToLower(src.Spec.RootObjectType) + "-integration-transformer",
+						},
+					},
+				},
+			},
+		}
+
+		b, _ := json.Marshal(kafkaSourcePod)
+		logging.FromContext(ctx).Info("json ->" + string(b))
+
+		_, err := r.KnEventingKafkaClientSet.SourcesV1beta1().KafkaSources(src.Namespace).Create(ctx, &kafkaSourcePod, metav1.CreateOptions{})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func jobSpecChanged(oldJobSpec batchv1.JobSpec, newJobSpec batchv1.JobSpec) bool {

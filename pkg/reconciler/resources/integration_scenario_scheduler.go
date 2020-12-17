@@ -47,7 +47,7 @@ func SerializeArray(data []v1alpha1.DomainExtractionParametersSpec) string {
 	return string(jsonData)
 }
 
-func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs, currNs string, svcUrl string) []batchv1beta1.CronJob {
+func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs, currNs string, svcUrl string, redisIp string) []batchv1beta1.CronJob {
 
 	env := []corev1.EnvVar{
 		{
@@ -171,6 +171,10 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs, cu
 		{
 			Name: "FRAMEWORK_PARAMS_SCHEMA_VALIDATOR_URL",
 			Value: svcUrl,
+		},
+		{
+			Name: "FRAMEWORK_PARAMS_REDIS_IP",
+			Value: redisIp,
 		},
 		{
 			Name:  "ADDL_PARAMS_SAP_CLIENT",

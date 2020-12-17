@@ -9,10 +9,10 @@ import (
 	"knative.dev/pkg/logging"
 	"knative.dev/pkg/metrics"
 	knservingclient "knative.dev/serving/pkg/client/injection/client"
+	knEventingKafkaClientSet "knative.dev/eventing-kafka/pkg/client/injection/client"
 	"kraken.dev/kraken-scheduler/pkg/apis/scheduler/v1alpha1"
 	integrationscenarioclient "kraken.dev/kraken-scheduler/pkg/client/injection/client"
 	integrationscenarioinformer "kraken.dev/kraken-scheduler/pkg/client/injection/informers/scheduler/v1alpha1/integrationscenario"
-	"kraken.dev/kraken-scheduler/pkg/monitor"
 	"os"
 
 	"knative.dev/pkg/controller"
@@ -48,6 +48,7 @@ func NewController(
 	c := &Reconciler{
 		KubeClientSet: 	   		  kubeclient.Get(ctx),
 		KnServingClientSet:  	  knservingclient.Get(ctx),
+		KnEventingKafkaClientSet: knEventingKafkaClientSet.Get(ctx),
 		scenarioClientSet: 		  integrationscenarioclient.Get(ctx),
 		scenarioLister:    		  integrationScenarioInformer.Lister(),
 		deploymentLister:  		  deploymentInformer.Lister(),
@@ -71,6 +72,6 @@ func NewController(
 	cmw.Watch(logging.ConfigMapName(), c.UpdateFromLoggingConfigMap)
 	cmw.Watch(metrics.ConfigMapName(), c.UpdateFromMetricsConfigMap)
 
-	monitor.StartHTTPServer()
+	StartHTTPServer(ctx, c)
 	return impl
 }
