@@ -164,18 +164,27 @@ type FrameworkParametersSpec struct {
 	IsSourceApiSSLDisabled string `json:"isSourceApiSSLDisabled"`
 
 	// +required
+	IsBasicAuthUsed string `json:"isBasicAuthUsed"`
+
+	// +optional
+	BasicAuthUser SecretValueFromSource `json:"basicAuthUser"`
+
+	// +optional
+	BasicAuthPassword SecretValueFromSource `json:"basicAuthPassword"`
+
+	// +optional
 	OAuthURL SecretValueFromSource `json:"oauthUrl"`
 
-	// +required
+	// +optional
 	OAuthScpUser SecretValueFromSource `json:"oauthScpUser"`
 
-	// +required
+	// +optional
 	OAuthScpPassword SecretValueFromSource `json:"oauthScpPassword"`
 
-	// +required
+	// +optional
 	OAuthScpClientID SecretValueFromSource `json:"oauthScpClientID"`
 
-	// +required
+	// +optional
 	OAuthScpClientSecret SecretValueFromSource `json:"oauthScpClientSecret"`
 
 	// +required

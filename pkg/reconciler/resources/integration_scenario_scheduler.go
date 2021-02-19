@@ -201,39 +201,59 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs, cu
 			Value: args.MetricsConfig,
 		},
 		{
-			Name: "FRAMEWORK_PARAMS_OAUTH_URL",
+			Name: "FRAMEWORK_PARAMS_NAMESPACE",
+			Value: currNs,
+		},
+	}
+
+	isBasicAuthUsed, _ := strconv.ParseBool(args.Scheduler.Spec.FrameworkParameters.IsBasicAuthUsed)
+
+	if isBasicAuthUsed {
+		env = append(env,
+		corev1.EnvVar {
+		Name: "FRAMEWORK_PARAMS_BASIC_AUTH_USER",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: args.Scheduler.Spec.FrameworkParameters.BasicAuthUser.SecretKeyRef,
+			},
+		},
+		corev1.EnvVar {
+		Name: "FRAMEWORK_PARAMS_BASIC_AUTH_PASSWD",
+			ValueFrom: &corev1.EnvVarSource{
+			SecretKeyRef: args.Scheduler.Spec.FrameworkParameters.BasicAuthPassword.SecretKeyRef,
+		},
+		})
+	} else {
+		env = append(env,
+		corev1.EnvVar {
+		Name: "FRAMEWORK_PARAMS_OAUTH_URL",
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: args.Scheduler.Spec.FrameworkParameters.OAuthURL.SecretKeyRef,
 			},
 		},
-		{
-			Name: "FRAMEWORK_PARAMS_OAUTH_SCP_USER",
+		corev1.EnvVar {
+		Name: "FRAMEWORK_PARAMS_OAUTH_SCP_USER",
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: args.Scheduler.Spec.FrameworkParameters.OAuthScpUser.SecretKeyRef,
 			},
 		},
-		{
-			Name: "FRAMEWORK_PARAMS_OAUTH_SCP_PASSWD",
+		corev1.EnvVar {
+		Name: "FRAMEWORK_PARAMS_OAUTH_SCP_PASSWD",
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: args.Scheduler.Spec.FrameworkParameters.OAuthScpPassword.SecretKeyRef,
 			},
 		},
-		{
-			Name: "FRAMEWORK_PARAMS_OAUTH_CLIENTID",
+		corev1.EnvVar {
+		Name: "FRAMEWORK_PARAMS_OAUTH_CLIENTID",
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: args.Scheduler.Spec.FrameworkParameters.OAuthScpClientID.SecretKeyRef,
 			},
 		},
-		{
-			Name: "FRAMEWORK_PARAMS_OAUTH_CLIENTSECRET",
+		corev1.EnvVar {
+		Name: "FRAMEWORK_PARAMS_OAUTH_CLIENTSECRET",
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: args.Scheduler.Spec.FrameworkParameters.OAuthScpClientSecret.SecretKeyRef,
 			},
-		},
-		{
-			Name: "FRAMEWORK_PARAMS_NAMESPACE",
-			Value: currNs,
-		},
+		})
 	}
 
 	/*_ := []corev1.EnvVar{

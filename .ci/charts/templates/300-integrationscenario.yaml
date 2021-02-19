@@ -86,7 +86,7 @@ spec:
                   properties:
                     schemaRegistryRequired:
                       type: string
-                    schemaValidatorGenRequired: 
+                    schemaValidatorGenRequired:
                       type: string
                 additionalProperties:
                   properties:
@@ -132,6 +132,14 @@ spec:
                   properties:
                     secretKeyRef:
                       type: object
+                basicAuthUser:
+                  properties:
+                    secretKeyRef:
+                      type: object
+                basicAuthPassword:
+                  properties:
+                    secretKeyRef:
+                      type: object
                 eventLogEndpoint:
                   properties:
                     secretKeyRef:
@@ -151,7 +159,7 @@ spec:
                 schemaRegistryCreds:
                   properties:
                     secretKeyRef:
-                      type: object      
+                      type: object
               type: object
             resources:
               properties:

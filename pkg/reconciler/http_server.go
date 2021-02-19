@@ -17,7 +17,6 @@ import (
 
 type SchedulerClientSet struct {
 	ctx 	   context.Context
-	reconciler *Reconciler
 	clientSet  *schedulerv1alpha1.SchedulerV1alpha1Client
 }
 
@@ -26,6 +25,20 @@ type IntegrationScenarioResp struct {
 	AppTenantId    string
 	RootObjectType string
 	Name		   string
+}
+
+func (schedulerClientSet *SchedulerClientSet) DelIntegrationScenario(name, namespace string) error {
+	result := v1alpha1.IntegrationScenario{}
+
+	return schedulerClientSet.clientSet.
+		RESTClient().
+		Delete().
+		Namespace(namespace).
+		Resource("integrationscenarios").
+		Name(name).
+		VersionedParams(&metav1.DeleteOptions{}, scheme.ParameterCodec).
+		Do(schedulerClientSet.ctx).
+		Into(&result)
 }
 
 func (schedulerClientSet *SchedulerClientSet) deleteIntegrationScenario(w http.ResponseWriter, req *http.Request)  {
@@ -233,7 +246,7 @@ func bootstrapServer(ctx context.Context) (*schedulerv1alpha1.SchedulerV1alpha1C
 	return clientSet, nil
 }
 
-func StartHTTPServer(ctx context.Context, reconciler *Reconciler) {
+func StartHTTPServer(ctx context.Context, reconciler *Reconciler) SchedulerClientSet {
 	r := mux.NewRouter()
 
 	clientSet, err := bootstrapServer(ctx)
@@ -244,7 +257,6 @@ func StartHTTPServer(ctx context.Context, reconciler *Reconciler) {
 	schedulerClientSet := &SchedulerClientSet{
 		ctx: 		ctx,
 		clientSet:  clientSet,
-		reconciler: reconciler,
 	}
 
 	go func() {
@@ -258,4 +270,6 @@ func StartHTTPServer(ctx context.Context, reconciler *Reconciler) {
 			Methods("DELETE")
 		http.ListenAndServe(":443", r)
 	}()
+
+	return *schedulerClientSet
 }

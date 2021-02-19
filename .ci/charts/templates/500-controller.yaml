@@ -38,7 +38,27 @@ spec:
           valueFrom:
             secretKeyRef:
               name: schema-registry-secret
-              key: storeCreds  
+              key: storeCreds
+        - name: KAFKA_BROKER_URL
+          valueFrom:
+            secretKeyRef:
+              name: tenant-onboarding-secret
+              key: kafkaBroker
+        - name: KAFKA_BROKER_SASL_USER
+          valueFrom:
+            secretKeyRef:
+              name: tenant-onboarding-secret
+              key: kafkaBrokerSASLUser
+        - name: KAFKA_BROKER_SASL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: tenant-onboarding-secret
+              key: kafkaBrokerSASLPassword
+        - name: TENANT_ONBOARDING_TOPIC
+          valueFrom:
+            secretKeyRef:
+              name: tenant-onboarding-secret
+              key: tenantOnboardingTopic
         volumeMounts:
         resources:
           requests:

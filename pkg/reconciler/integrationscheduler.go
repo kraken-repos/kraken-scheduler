@@ -30,6 +30,7 @@ import (
 	listers "kraken.dev/kraken-scheduler/pkg/client/listers/scheduler/v1alpha1"
 	"kraken.dev/kraken-scheduler/pkg/messagebroker"
 	"kraken.dev/kraken-scheduler/pkg/reconciler/resources"
+	"kraken.dev/kraken-scheduler/pkg/slack"
 	"strconv"
 	"strings"
 	"time"
@@ -43,6 +44,11 @@ const (
 	integrationSchedulerDeploymentUpdated = "IntegrationSchedulerDeploymentUpdated"
 	integrationSchedulerDeploymentFailed  = "IntegrationSchedulerDeploymentFailed"
 	component							  = "integration-framework-scheduler"
+	componentNamespaceEnvVar			  = "K8S_NAMESPACE"
+	kafkaBrokerEnvVar					  = "KAFKA_BROKER_URL"
+	kafkaBrokerSASLUserEnvVar			  = "KAFKA_BROKER_SASL_USER"
+	kafkaBrokerSASLPasswordEnvVar    	  = "KAFKA_BROKER_SASL_PASSWORD"
+	tenantOnboardingTopicEnvVar			  = "TENANT_ONBOARDING_TOPIC"
 )
 
 var (
@@ -85,6 +91,8 @@ type Reconciler struct {
 	loggingContext     context.Context
 	loggingConfig	   *logging.Config
 	metricsConfig	   *metrics.ExporterOptions
+
+	SlackClient *slack.Client
 }
 
 // Check that our Reconciler implements Interface
@@ -125,9 +133,20 @@ func (r *Reconciler) ReconcileKind(ctx context.Context, src *v1alpha1.Integratio
 	integrationSchedulers, err := r.createIntegrationScenarioDeployers(ctx, svcUrl, redis, src)
 	if err != nil {
 		logging.FromContext(ctx).Error("Unable to create the integration scenario schedulers", zap.Error(err))
+
+		err = r.SlackClient.SendMessage("Deployed integration scenario: " + src.Name + " in namespace: " + src.Namespace)
+		if err != nil {
+			logging.FromContext(ctx).Error("Failed to post to slack", zap.Error(err))
+		}
+
 		return err
 	}
 	src.Status.MarkDeployed(integrationSchedulers)
+
+	err = r.SlackClient.SendMessage("Deployed integration scenario: " + src.Name + " in namespace: " + src.Namespace)
+	if err != nil {
+		logging.FromContext(ctx).Error("Failed to post to slack", zap.Error(err))
+	}
 
 	return nil
 }
@@ -159,9 +178,17 @@ func (r *Reconciler) provisionKafkaTopic(ctx context.Context, src *v1alpha1.Inte
 		SASLPassword: string(secret.Data[pwdSecretKey]),
 	}
 
-	kafkaClient.Initialize(ctx)
+	err = kafkaClient.Initialize(ctx)
+	if err != nil {
+		return err
+	}
+
 	if kafkaClient.AdminClient != nil {
-		defer kafkaClient.AdminClient.Close()
+		defer func() {
+			if err = kafkaClient.AdminClient.Close(); err != nil {
+				panic(err)
+			}
+		}()
 	}
 
 	kafkaClient.CreateTopic(ctx, src.Spec.RootObjectType)
@@ -186,9 +213,17 @@ func (r *Reconciler) removeKafkaTopic(ctx context.Context, src *v1alpha1.Integra
 		SASLPassword: string(secret.Data[pwdSecretKey]),
 	}
 
-	kafkaClient.Initialize(ctx)
+	err = kafkaClient.Initialize(ctx)
+	if err != nil {
+		return err
+	}
+
 	if kafkaClient.AdminClient != nil {
-		defer kafkaClient.AdminClient.Close()
+		defer func() {
+			if err = kafkaClient.AdminClient.Close(); err != nil {
+				panic(err)
+			}
+		}()
 	}
 
 	kafkaClient.DeleteTopic(ctx, src.Spec.RootObjectType)
@@ -291,6 +326,11 @@ func (r *Reconciler) FinalizeKind(ctx context.Context, src *v1alpha1.Integration
 		return err
 	}
 
+	err = r.SlackClient.SendMessage("Removed integration scenario: " + src.Name + " in namespace: " + src.Namespace)
+	if err != nil {
+		logging.FromContext(ctx).Error("Failed to post to slack", zap.Error(err))
+	}
+
 	return nil
 }
 
@@ -359,7 +399,7 @@ func (r *Reconciler) createIntegrationScenarioDeployers(ctx context.Context, svc
 		WaitQueueProducerImage:  r.waitQueueProducerImage,
 		WaitQueueProcessorImage: r.waitQueueProcessorImage,
 		Scheduler: 				 src,
-		Labels: 				 resources.GetLabels(src.Name),
+		Labels: 				 resources.GetLabels(src.Name, "", ""),
 		LoggingConfig: 			 loggingConfig,
 		MetricsConfig: 			 metricsConfig,
 	}
@@ -470,6 +510,7 @@ func (r *Reconciler) createSchemaRegistry(ctx context.Context, src *v1alpha1.Int
 		schemaUpdaterPod := corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: strings.ToLower(src.Spec.RootObjectType) + "-schema-updater",
+				Labels: resources.GetLabels(src.Name, "", ""),
 			},
 			Spec: corev1.PodSpec{
 				RestartPolicy: "Never",
@@ -499,6 +540,7 @@ func (r *Reconciler) createSchemaRegistry(ctx context.Context, src *v1alpha1.Int
 		imageBuilderPod := corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: strings.ToLower(src.Spec.RootObjectType) + "-image-builder",
+				Labels: resources.GetLabels(src.Name, "", ""),
 			},
 			Spec: corev1.PodSpec{
 				RestartPolicy:      "Never",
@@ -588,6 +630,7 @@ func (r *Reconciler) createSchemaRegistry(ctx context.Context, src *v1alpha1.Int
 	schemaValidatorPod := servingv1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "kraken-schema-validator-" + strings.ToLower(src.Spec.RootObjectType),
+			Labels: resources.GetLabels(src.Name, "", ""),
 		},
 		Spec: servingv1.ServiceSpec{
 			ConfigurationSpec: servingv1.ConfigurationSpec{
@@ -695,6 +738,7 @@ func (r *Reconciler) createTransformer(ctx context.Context, src *v1alpha1.Integr
 	transformerPod := servingv1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: strings.ToLower(src.Spec.RootObjectType) + "-integration-transformer",
+			Labels: resources.GetLabels(src.Name, "", ""),
 		},
 		Spec: servingv1.ServiceSpec{
 			ConfigurationSpec: servingv1.ConfigurationSpec{
@@ -778,7 +822,8 @@ func (r *Reconciler) createKafkaSource(ctx context.Context, src *v1alpha1.Integr
 	for instance := 1; instance <= parallelism; instance++ {
 		kafkaSourcePod := eventingkafkav1beta1.KafkaSource{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: strings.ToLower(src.Spec.RootObjectType) + "-kafka-source",
+				Name: strings.ToLower(src.Spec.RootObjectType) + "-kafka-source"+ strconv.Itoa(instance),
+				Labels: resources.GetLabels(src.Name, "", ""),
 			},
 			Spec: eventingkafkav1beta1.KafkaSourceSpec{
 				ConsumerGroup: src.Spec.RootObjectType + "ProcessingTopic",

@@ -13,9 +13,10 @@ type KafkaClient struct {
 	SASLUser		 string
 	SASLPassword	 string
 	AdminClient      sarama.ClusterAdmin
+	Client			 sarama.Client
 }
 
-func (kafkaClient *KafkaClient) Initialize(ctx context.Context) {
+func (kafkaClient *KafkaClient) Initialize(ctx context.Context) error {
 	kafkaConfig := sarama.NewConfig()
 	kafkaConfig.Consumer.Offsets.Initial = sarama.OffsetOldest
 	kafkaConfig.Version = sarama.V2_0_1_0
@@ -31,14 +32,23 @@ func (kafkaClient *KafkaClient) Initialize(ctx context.Context) {
 	kafkaAdminClient, err := sarama.NewClusterAdmin(strings.Split(kafkaClient.BootstrapServers, ","), kafkaConfig)
 	if err != nil {
 		logging.FromContext(ctx).Errorf(err.Error())
+		return err
 	}
 	kafkaClient.AdminClient = kafkaAdminClient
+
+	client, err := sarama.NewClient(strings.Split(kafkaClient.BootstrapServers, ","), kafkaConfig)
+	if err != nil {
+		logging.FromContext(ctx).Errorf(err.Error())
+		return err
+	}
+	kafkaClient.Client = client
+	return nil
 }
 
 func (kafkaClient *KafkaClient) CreateTopic(ctx context.Context, rootObjectType string) {
 	err := kafkaClient.AdminClient.CreateTopic(rootObjectType + "ProcessingTopic",
 		&sarama.TopicDetail{
-			NumPartitions: 6,
+			NumPartitions: 1,
 			ReplicationFactor: 3,
 		},
 		false,

@@ -12,6 +12,7 @@ require (
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/influxdata/tdigest v0.0.1 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0 // indirect
+	github.com/pkg/errors v0.9.1
 	github.com/slinkydeveloper/loadastic v0.0.0-20191203132749-9afe5a010a57 // indirect
 	go.uber.org/zap v1.16.0
 	honnef.co/go/tools v0.0.1-2020.1.5 // indirect
