@@ -59,7 +59,7 @@ func (kafkaClient *KafkaClient) CreateTopic(ctx context.Context, rootObjectType 
 
 	err = kafkaClient.AdminClient.CreateTopic(rootObjectType + "OutboundTopic",
 		&sarama.TopicDetail{
-			NumPartitions: 6,
+			NumPartitions: 1,
 			ReplicationFactor: 3,
 		},
 		false,
