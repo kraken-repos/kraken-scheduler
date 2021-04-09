@@ -44,12 +44,33 @@ func NewController(
 		return nil
 	}
 
+	k8sCluster, defined := os.LookupEnv(componentClusterEnvVar)
+	if !defined {
+		logging.FromContext(ctx).Errorf("required environment variable '%s' not defined", componentClusterEnvVar)
+		return nil
+	}
+
+	k8sNamespace, defined := os.LookupEnv(componentNamespaceEnvVar)
+	if !defined {
+		logging.FromContext(ctx).Errorf("required environment variable '%s' not defined", componentNamespaceEnvVar)
+		return nil
+	}
+
 	integrationScenarioInformer := integrationscenarioinformer.Get(ctx)
 	deploymentInformer := deploymentinformer.Get(ctx)
 
 	slackClient := slack.Client{
-		WebHookURL: "https://hooks.slack.com/services/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",
+		WebHookURL: "https://hooks.slack.com/services/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",
 		Timeout: 5 * time.Second,
+	}
+
+	isRedisEmbedded := false
+	cacheUrl, err := GetRedisCredentialsFromEnvVar(ctx)
+	if err != nil {
+		logging.FromContext(ctx).Errorf("required cache credentials not found, moving to embedded mode", err.Error())
+		isRedisEmbedded = true
+
+		cacheUrl = "redis." + k8sNamespace + ".svc.cluster.local:6379"
 	}
 
 	c := &Reconciler{
@@ -64,6 +85,10 @@ func NewController(
 		schemaRegistryStoreCreds: schemaRegistryStoreCreds,
 		loggingContext:			  ctx,
 		SlackClient: 			  &slackClient,
+		ClusterId:     			  k8sCluster,
+		CentralCacheUrl: 		  cacheUrl,
+		IsRedisEmbedded:  		  isRedisEmbedded,
+		IsPrinted: 				  false,
 	}
 
 	impl := integrationscenario.NewImpl(ctx, c)
@@ -86,6 +111,15 @@ func NewController(
 		KubeClientSet: c.KubeClientSet,
 		SchedulerClientSet: &schedulerClientSet,
 		SlackClient: &slackClient,
+		ClusterId: k8sCluster,
+		CacheUrl: cacheUrl,
+		Namespace: k8sNamespace,
+		IsRedisEmbedded: isRedisEmbedded,
+	}
+
+	integrationScenarioMsgConsumer := IntegrationScenarioMsgConsumer{
+		KubeClientSet: c.KubeClientSet,
+		SchedulerClientSet: &schedulerClientSet,
 	}
 
 	brokerUrl, brokerUser, brokerPassword, err := GetKafkaCredentialsFromEnvVar(ctx)
@@ -95,6 +129,12 @@ func NewController(
 	}
 
 	err = tenantMsgConsumer.CreateConsumer(brokerUrl, brokerUser, brokerPassword, ctx)
+	if err != nil {
+		logging.FromContext(ctx).Errorf(err.Error())
+		return nil
+	}
+
+	err = integrationScenarioMsgConsumer.CreateConsumer(brokerUrl, brokerUser, brokerPassword, ctx)
 	if err != nil {
 		logging.FromContext(ctx).Errorf(err.Error())
 		return nil
@@ -112,7 +152,29 @@ func NewController(
 		return nil
 	}
 
+	integrationScenarioTopic, defined := os.LookupEnv(intScnOnboardingTopicEnvVar)
+	if !defined {
+		logging.FromContext(ctx).Errorf("required environment variable '%s' not defined", intScnOnboardingTopicEnvVar)
+		return nil
+	}
+
+	err = integrationScenarioMsgConsumer.ListenAndOnboardIntegrationScenario(ctx, integrationScenarioTopic)
+	if err != nil {
+		logging.FromContext(ctx).Errorf(err.Error())
+		return nil
+	}
+
 	return impl
+}
+
+func GetRedisCredentialsFromEnvVar(ctx context.Context) (string, error) {
+	redisUrl, defined := os.LookupEnv(redisUrlEnvVar)
+	if !defined {
+		logging.FromContext(ctx).Errorf("required environment variable '%s' not defined", redisUrlEnvVar)
+		return "", errors2.Errorf("required environment variable '%s' not defined", redisUrlEnvVar)
+	}
+
+	return redisUrl, nil
 }
 
 func GetKafkaCredentialsFromEnvVar(ctx context.Context) (string, string, string, error) {

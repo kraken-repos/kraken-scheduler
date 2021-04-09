@@ -128,6 +128,9 @@ type DomainExtractionParametersSpec struct {
 	DomainSchemaRegistryProps DomainSchemaRegistrySpec `json:"domainSchemaRegistryProps"`
 
 	// +optional
+	IsDemoEnabled string `json:"isDemoEnabled"`
+
+	// +optional
 	AdditionalProperties AdditionalProperties `json:"additionalProperties,omitempty"`
 }
 

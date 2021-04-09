@@ -7,6 +7,7 @@ require (
 	github.com/cloudevents/sdk-go/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-redis/redis/v8 v8.3.4
+	github.com/gomodule/redigo v1.7.0
 	github.com/google/go-cmp v0.5.2 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2 // indirect

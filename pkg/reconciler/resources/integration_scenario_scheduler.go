@@ -3,14 +3,15 @@ package resources
 import (
 	"encoding/json"
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/resource"
-	"kraken.dev/kraken-scheduler/pkg/apis/scheduler/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"knative.dev/pkg/kmeta"
+	"kraken.dev/kraken-scheduler/pkg/apis/scheduler/v1alpha1"
+	rediscache "kraken.dev/kraken-scheduler/pkg/cache"
 	"strconv"
 	"strings"
 )
@@ -47,7 +48,11 @@ func SerializeArray(data []v1alpha1.DomainExtractionParametersSpec) string {
 	return string(jsonData)
 }
 
-func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs, currNs string, svcUrl string, redisIp string) []batchv1beta1.CronJob {
+func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs, currNs string, svcUrl string, redisIp string, clusterId string) []batchv1beta1.CronJob {
+	partitions, _ := strconv.Atoi(args.Scheduler.Spec.FrameworkParameters.Parallelism)
+	if partitions%2 == 0 {
+		partitions = partitions/2
+	}
 
 	env := []corev1.EnvVar{
 		{
@@ -135,6 +140,14 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs, cu
 			Value: args.Scheduler.Spec.DomainExtractionParameters.DomainExtractionStrategies.GroupingStrategy.GroupOperatorType,
 		},
 		{
+			Name:  "DOMAIN_EXTRACTOR_DEMO_ENABLED",
+			Value: args.Scheduler.Spec.DomainExtractionParameters.IsDemoEnabled,
+		},
+		{
+			Name:  "FRAMEWORK_PARAMS_PARALLELISM",
+			Value: strconv.Itoa(partitions),
+		},
+		{
 			Name:  "FRAMEWORK_PARAMS_NO_OF_PACKETS",
 			Value: args.Scheduler.Spec.FrameworkParameters.NoOfJobs,
 		},
@@ -203,6 +216,10 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs, cu
 		{
 			Name: "FRAMEWORK_PARAMS_NAMESPACE",
 			Value: currNs,
+		},
+		{
+			Name: "FRAMEWORK_PARAMS_CLUSTER",
+			Value: clusterId,
 		},
 	}
 
@@ -333,6 +350,15 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs, cu
 		rootObjectType = rootObjectType[:10]
 	}
 
+	redisCli := rediscache.RedisCli{
+		Host: strings.Split(redisIp, ":")[0],
+		Port: strings.Split(redisIp, ":")[1],
+	}
+
+	imagePullPolicy, found := redisCli.GetMapEntry(clusterId + "-" + currNs + "-image", "ImagePullPolicy")
+	if !found {
+		imagePullPolicy = corev1.PullIfNotPresent
+	}
 
 	cronJobForWaitQueueProducer := batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
@@ -358,7 +384,7 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs, cu
 								{
 									Name:  	   		 strings.ToLower(args.Scheduler.Spec.RootObjectType) + "-producer",
 									Image: 	   		 args.WaitQueueProducerImage,
-									ImagePullPolicy: "Always",
+									ImagePullPolicy: imagePullPolicy,
 									Env:   	   		 env,
 									Resources: 		 res,
 								},
@@ -400,7 +426,7 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs, cu
 								{
 									Name:  	   		 strings.ToLower(args.Scheduler.Spec.RootObjectType) + "-processor",
 									Image: 	   		 args.WaitQueueProcessorImage,
-									ImagePullPolicy: "Always",
+									ImagePullPolicy: imagePullPolicy,
 									Env:   	   		 env,
 									Resources: 		 res,
 								},

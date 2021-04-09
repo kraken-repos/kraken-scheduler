@@ -21,6 +21,7 @@ import (
 	"knative.dev/pkg/logging"
 	"knative.dev/pkg/metrics"
 	pkgreconciler "knative.dev/pkg/reconciler"
+	rediscache "kraken.dev/kraken-scheduler/pkg/cache"
 	servingv1 "knative.dev/serving/pkg/apis/serving/v1"
 	knservingversioned "knative.dev/serving/pkg/client/clientset/versioned"
 	"kraken.dev/kraken-scheduler/pkg/apis/scheduler/v1alpha1"
@@ -44,11 +45,14 @@ const (
 	integrationSchedulerDeploymentUpdated = "IntegrationSchedulerDeploymentUpdated"
 	integrationSchedulerDeploymentFailed  = "IntegrationSchedulerDeploymentFailed"
 	component							  = "integration-framework-scheduler"
+	componentClusterEnvVar				  = "K8S_CLUSTER"
 	componentNamespaceEnvVar			  = "K8S_NAMESPACE"
 	kafkaBrokerEnvVar					  = "KAFKA_BROKER_URL"
 	kafkaBrokerSASLUserEnvVar			  = "KAFKA_BROKER_SASL_USER"
 	kafkaBrokerSASLPasswordEnvVar    	  = "KAFKA_BROKER_SASL_PASSWORD"
 	tenantOnboardingTopicEnvVar			  = "TENANT_ONBOARDING_TOPIC"
+	intScnOnboardingTopicEnvVar			  = "INT_SCENARIO_ONBOARDING_TOPIC"
+	redisUrlEnvVar						  = "CACHE_URL"
 )
 
 var (
@@ -93,6 +97,10 @@ type Reconciler struct {
 	metricsConfig	   *metrics.ExporterOptions
 
 	SlackClient *slack.Client
+	CentralCacheUrl string
+	ClusterId   string
+	IsPrinted   bool
+	IsRedisEmbedded bool
 }
 
 // Check that our Reconciler implements Interface
@@ -106,46 +114,69 @@ func (r *Reconciler) ReconcileKind(ctx context.Context, src *v1alpha1.Integratio
 		logging.FromContext(ctx).Error("error while creating Kafka Topics", zap.Any("integrationScenarioScheduler", err))
 	}
 
-	schemaRegistryRequired, err := strconv.ParseBool(src.Spec.DomainExtractionParameters.DomainSchemaRegistryProps.SchemaRegistryRequired)
+	isDemoEnabled, err := strconv.ParseBool(src.Spec.DomainExtractionParameters.IsDemoEnabled)
+	redis := r.getRedisExternalIp(ctx, src)
 
 	svcUrl := ""
-	if schemaRegistryRequired {
-		logging.FromContext(ctx).Info("Register schema for Integration Scenario " + src.Spec.RootObjectType)
-		svcUrl, err = r.createSchemaRegistry(ctx, src)
+	if !isDemoEnabled {
+
+		schemaRegistryRequired, err := strconv.ParseBool(src.Spec.DomainExtractionParameters.DomainSchemaRegistryProps.SchemaRegistryRequired)
+
+		if schemaRegistryRequired {
+			logging.FromContext(ctx).Info("Register schema for Integration Scenario " + src.Spec.RootObjectType)
+			svcUrl, err = r.createSchemaRegistry(ctx, src)
+			if err != nil {
+				logging.FromContext(ctx).Error("error while creating Schema Registry", zap.Any("integrationScenarioScheduler", err))
+			}
+		}
+
+		redisCli := rediscache.RedisCli{
+			Host: strings.Split(redis, ":")[0],
+			Port: strings.Split(redis, ":")[1],
+		}
+
+		imagePullPolicy, found := redisCli.GetMapEntry(r.ClusterId + "-" + src.Namespace + "-image", "ImagePullPolicy")
+		if !found {
+			imagePullPolicy = corev1.PullIfNotPresent
+		}
+
+		err = r.createTransformer(ctx, src, imagePullPolicy)
 		if err != nil {
-			logging.FromContext(ctx).Error("error while creating Schema Registry", zap.Any("integrationScenarioScheduler", err))
+			logging.FromContext(ctx).Error("Unable to create the Kraken Transformer", zap.Error(err))
+			return err
+		}
+
+		err = r.createKafkaSource(ctx, src)
+		if err != nil {
+			logging.FromContext(ctx).Error("Unable to create the Knative Kafka Source", zap.Error(err))
+			return err
 		}
 	}
 
-	err = r.createTransformer(ctx, src)
-	if err != nil {
-		logging.FromContext(ctx).Error("Unable to create the Kraken Transformer", zap.Error(err))
-		return err
-	}
-
-	err = r.createKafkaSource(ctx, src)
-	if err != nil {
-		logging.FromContext(ctx).Error("Unable to create the Knative Kafka Source", zap.Error(err))
-		return err
-	}
-
-	redis := r.getRedisExternalIp(ctx, src)
-	integrationSchedulers, err := r.createIntegrationScenarioDeployers(ctx, svcUrl, redis, src)
+	integrationSchedulers, err := r.createIntegrationScenarioDeployers(ctx, svcUrl, redis, r.ClusterId, src)
 	if err != nil {
 		logging.FromContext(ctx).Error("Unable to create the integration scenario schedulers", zap.Error(err))
 
-		err = r.SlackClient.SendMessage("Deployed integration scenario: " + src.Name + " in namespace: " + src.Namespace)
-		if err != nil {
-			logging.FromContext(ctx).Error("Failed to post to slack", zap.Error(err))
+		if !r.IsPrinted {
+			err = r.SlackClient.SendMessage("Deployed integration scenario: " + src.Name + " in namespace: " + src.Namespace)
+			if err != nil {
+				logging.FromContext(ctx).Error("Failed to post to slack", zap.Error(err))
+			}
+		}
+
+		if isDemoEnabled {
+			r.IsPrinted = true
 		}
 
 		return err
 	}
 	src.Status.MarkDeployed(integrationSchedulers)
 
-	err = r.SlackClient.SendMessage("Deployed integration scenario: " + src.Name + " in namespace: " + src.Namespace)
-	if err != nil {
-		logging.FromContext(ctx).Error("Failed to post to slack", zap.Error(err))
+	if !isDemoEnabled {
+		err = r.SlackClient.SendMessage("Deployed integration scenario: " + src.Name + " in namespace: " + src.Namespace)
+		if err != nil {
+			logging.FromContext(ctx).Error("Failed to post to slack", zap.Error(err))
+		}
 	}
 
 	return nil
@@ -191,7 +222,12 @@ func (r *Reconciler) provisionKafkaTopic(ctx context.Context, src *v1alpha1.Inte
 		}()
 	}
 
-	kafkaClient.CreateTopic(ctx, src.Spec.RootObjectType)
+	parallelism, _ := strconv.Atoi(src.Spec.FrameworkParameters.Parallelism)
+	if parallelism%2 == 0 {
+		parallelism = parallelism/2
+	}
+
+	kafkaClient.CreateTopic(ctx, src.Spec.RootObjectType, int32(parallelism))
 
 	return nil
 }
@@ -232,11 +268,22 @@ func (r *Reconciler) removeKafkaTopic(ctx context.Context, src *v1alpha1.Integra
 }
 
 func (r *Reconciler) getRedisExternalIp(ctx context.Context, src *v1alpha1.IntegrationScenario) string {
-	redisSvc, err := r.KubeClientSet.CoreV1().Services(src.Namespace).Get(ctx, "redis", metav1.GetOptions{})
-	if err != nil {
-		return ""
+	if r.IsRedisEmbedded {
+		_, err := r.KubeClientSet.CoreV1().Services(src.Namespace).Get(ctx, "redis", metav1.GetOptions{})
+		if err != nil {
+			return ""
+		}
+		return "redis." + src.Namespace + ".svc.cluster.local:6379"
+	} else {
+		redisSecret, err := r.KubeClientSet.CoreV1().Secrets(src.Namespace).Get(ctx, "redis-secret", metav1.GetOptions{})
+		if err != nil {
+			return ""
+		}
+
+		host := string(redisSecret.Data["host"])
+		port := string(redisSecret.Data["port"])
+		return fmt.Sprintf("%s:%s", host, port)
 	}
-	return redisSvc.Spec.ClusterIP
 }
 
 func (r *Reconciler) FinalizeKind(ctx context.Context, src *v1alpha1.IntegrationScenario) pkgreconciler.Event {
@@ -335,17 +382,81 @@ func (r *Reconciler) FinalizeKind(ctx context.Context, src *v1alpha1.Integration
 }
 
 func (r *Reconciler) RemoveRedisQueues(ctx context.Context, src *v1alpha1.IntegrationScenario) error {
+	cacheUrl := r.getRedisExternalIp(ctx, src)
 	client := cache.Client{
-		Host: "redis." + src.Namespace + ".svc.cluster.local",
-		Port: "6379",
+		Host: strings.Split(cacheUrl, ":")[0],
+		Port: strings.Split(cacheUrl, ":")[1],
 	}
 
-	keys := []string{"k8swaitqueue-" + src.Spec.RootObjectType, "k8sworkqueue-" + src.Spec.RootObjectType}
+/*	keys := []string{r.ClusterId + "-" + src.Namespace + "-k8swaitqueue-" + src.Spec.RootObjectType,
+		r.ClusterId + "-" + src.Namespace + "-k8sworkqueue-" + src.Spec.RootObjectType}*/
+
+	keys := []string{r.ClusterId + "-" + src.Namespace + "-" + "k8swaitqueue-" + src.Spec.RootObjectType,
+		r.ClusterId + "-" + src.Namespace + "-" + "k8sworkqueue-" + src.Spec.RootObjectType}
 
 	err := client.DeleteKeysFromCache(ctx, keys)
 	if err != nil {
 		logging.FromContext(ctx).Info("cannot delete redis objects for " + src.Spec.RootObjectType)
 		return err
+	}
+
+	delMap := r.ClusterId + "-" + src.Namespace + "-deltaTimestamp"
+
+	res, err := client.GetAllKeysFromMapCache(ctx, delMap)
+	if err != nil {
+		logging.FromContext(ctx).Info("cannot delete deltaTimestamp for " + src.Spec.RootObjectType)
+		return err
+	}
+
+	for k, _ := range res {
+		if strings.Contains(k, src.Spec.TenantId) && strings.Contains(k, src.Spec.DomainExtractionParameters.EntitySetName) {
+			err = client.DeleteKeyFromMapCache(ctx, delMap, k)
+			if err != nil {
+				logging.FromContext(ctx).Info("cannot delete deltaTimestamp for " + src.Spec.RootObjectType)
+				return err
+			}
+			break
+		}
+	}
+
+	redisCli := rediscache.RedisCli{
+		Host: strings.Split(r.CentralCacheUrl, ":")[0],
+		Port: strings.Split(r.CentralCacheUrl, ":")[1],
+	}
+
+	jobTimeTracker := r.ClusterId + "-" + src.Namespace + "-jobTimeTracker" //map[string]time.Time{}
+	jobRestartTracker := r.ClusterId + "-" + src.Namespace + "-jobRestartTracker" //map[string]time.Time{}
+
+	data , err := redisCli.GetAllEntry(jobTimeTracker)
+	if err != nil {
+		logging.FromContext(ctx).Info("cannot delete informer cache for " + src.Spec.RootObjectType)
+		return err
+	}
+	for key, _ := range data {
+		if strings.Contains(key, strings.ToLower(src.Spec.RootObjectType)) {
+			err = redisCli.DeleteEntry(jobTimeTracker, key)
+
+			if err != nil {
+				logging.FromContext(ctx).Info("cannot delete informer cache for " + src.Spec.RootObjectType)
+				return err
+			}
+		}
+	}
+
+	data , err = redisCli.GetAllEntry(jobRestartTracker)
+	if err != nil {
+		logging.FromContext(ctx).Info("cannot delete informer cache for " + src.Spec.RootObjectType)
+		return err
+	}
+	for key, _ := range data {
+		if strings.Contains(key, strings.ToLower(src.Spec.RootObjectType)) {
+			err = redisCli.DeleteEntry(jobRestartTracker, key)
+
+			if err != nil {
+				logging.FromContext(ctx).Info("cannot delete informer cache for " + src.Spec.RootObjectType)
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -380,7 +491,7 @@ func checkResourcesStatus(src *v1alpha1.IntegrationScenario) error {
 	return nil
 }
 
-func (r *Reconciler) createIntegrationScenarioDeployers(ctx context.Context, svcUrl string, redisIp string, src *v1alpha1.IntegrationScenario) ([]batchv1beta1.CronJob, error) {
+func (r *Reconciler) createIntegrationScenarioDeployers(ctx context.Context, svcUrl string, redisIp string, clusterId string, src *v1alpha1.IntegrationScenario) ([]batchv1beta1.CronJob, error) {
 	if err := checkResourcesStatus(src); err != nil {
 		return nil, err
 	}
@@ -404,8 +515,11 @@ func (r *Reconciler) createIntegrationScenarioDeployers(ctx context.Context, svc
 		MetricsConfig: 			 metricsConfig,
 	}
 
+	logging.FromContext(ctx).Info("Env vars- " + redisIp + "-" + clusterId + "-" + src.Namespace + "-" +
+		strconv.FormatBool(r.IsRedisEmbedded))
+
 	logging.FromContext(ctx).Info("Deploying CronJobs for Integration Scenario " + src.Spec.RootObjectType)
-	expected := resources.MakeIntegrationScenarioScheduler(&integrationScenarioSchedulerArgs, src.Namespace, svcUrl, redisIp)
+	expected := resources.MakeIntegrationScenarioScheduler(&integrationScenarioSchedulerArgs, src.Namespace, svcUrl, redisIp, clusterId)
 
 	jobRunning := false
 
@@ -711,8 +825,13 @@ func (r *Reconciler) deleteTransformer(ctx context.Context, src *v1alpha1.Integr
 	return nil
 }
 
-func (r *Reconciler) createTransformer(ctx context.Context, src *v1alpha1.IntegrationScenario) error {
+func (r *Reconciler) createTransformer(ctx context.Context, src *v1alpha1.IntegrationScenario, imagePullPolicy corev1.PullPolicy) error {
 	logging.FromContext(ctx).Info("Create Kraken Transformer")
+
+	partitions, _ := strconv.Atoi(src.Spec.FrameworkParameters.Parallelism)
+	if partitions%2 == 0 {
+		partitions = partitions/2
+	}
 
 	transformerEnv := []corev1.EnvVar{
 		{
@@ -732,6 +851,26 @@ func (r *Reconciler) createTransformer(ctx context.Context, src *v1alpha1.Integr
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: src.Spec.FrameworkParameters.EventLogPassword.SecretKeyRef,
 			},
+		},
+		{
+			Name: "KAFKA_PARTITIONS",
+			Value: strconv.Itoa(partitions),
+		},
+		{
+			Name: "FRAMEWORK_PARAMS_REDIS_EMBEDDED",
+			Value: strconv.FormatBool(r.IsRedisEmbedded),
+		},
+		{
+			Name: "FRAMEWORK_PARAMS_REDIS_IP",
+			Value: r.getRedisExternalIp(ctx, src),
+		},
+		{
+			Name: "FRAMEWORK_PARAMS_NAMESPACE",
+			Value: src.Namespace,
+		},
+		{
+			Name: "FRAMEWORK_PARAMS_CLUSTER",
+			Value: r.ClusterId,
 		},
 	}
 
@@ -759,7 +898,7 @@ func (r *Reconciler) createTransformer(ctx context.Context, src *v1alpha1.Integr
 								{
 									Name:            strings.ToLower(src.Spec.RootObjectType) + "-integration-transformer",
 									Image:           "harbor.eurekacloud.io/eureka/kraken-transformer-validator:latest",
-									ImagePullPolicy: "Always",
+									ImagePullPolicy: imagePullPolicy,
 									Env:             transformerEnv,
 								},
 							},

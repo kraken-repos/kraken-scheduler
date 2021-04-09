@@ -45,10 +45,10 @@ func (kafkaClient *KafkaClient) Initialize(ctx context.Context) error {
 	return nil
 }
 
-func (kafkaClient *KafkaClient) CreateTopic(ctx context.Context, rootObjectType string) {
+func (kafkaClient *KafkaClient) CreateTopic(ctx context.Context, rootObjectType string, partitions int32) {
 	err := kafkaClient.AdminClient.CreateTopic(rootObjectType + "ProcessingTopic",
 		&sarama.TopicDetail{
-			NumPartitions: 1,
+			NumPartitions: partitions,
 			ReplicationFactor: 3,
 		},
 		false,
@@ -59,7 +59,7 @@ func (kafkaClient *KafkaClient) CreateTopic(ctx context.Context, rootObjectType 
 
 	err = kafkaClient.AdminClient.CreateTopic(rootObjectType + "OutboundTopic",
 		&sarama.TopicDetail{
-			NumPartitions: 1,
+			NumPartitions: partitions,
 			ReplicationFactor: 3,
 		},
 		false,

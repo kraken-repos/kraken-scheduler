@@ -86,7 +86,7 @@ spec:
                   properties:
                     schemaRegistryRequired:
                       type: string
-                    schemaValidatorGenRequired:
+                    schemaValidatorGenRequired: 
                       type: string
                 additionalProperties:
                   properties:
@@ -111,6 +111,8 @@ spec:
                 packetGenSchedule:
                   type: string
                 jobProcessSchedule:
+                  type: string
+                isBasicAuthUsed:
                   type: string
                 oauthUrl:
                   properties:
@@ -159,7 +161,7 @@ spec:
                 schemaRegistryCreds:
                   properties:
                     secretKeyRef:
-                      type: object
+                      type: object      
               type: object
             resources:
               properties:

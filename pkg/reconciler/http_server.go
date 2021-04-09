@@ -41,6 +41,44 @@ func (schedulerClientSet *SchedulerClientSet) DelIntegrationScenario(name, names
 		Into(&result)
 }
 
+func (schedulerClientSet *SchedulerClientSet) ListIntegrationScenarios(namespace string) ([]string, error) {
+	result := v1alpha1.IntegrationScenarioList{}
+
+	err := schedulerClientSet.clientSet.
+		RESTClient().
+		Get().
+		Namespace(namespace).
+		Resource("integrationscenarios").
+		VersionedParams(&metav1.ListOptions{}, scheme.ParameterCodec).
+		Do(schedulerClientSet.ctx).
+		Into(&result)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var integrationScenarioList []string
+	for _, is := range result.Items {
+		integrationScenarioList = append(integrationScenarioList, is.GetName())
+	}
+
+	return integrationScenarioList, nil
+}
+
+func (schedulerClientSet *SchedulerClientSet) CreateIntegrationScenario(namespace string,
+																		integrationScenario v1alpha1.IntegrationScenario) error {
+	result := v1alpha1.IntegrationScenario{}
+
+	return schedulerClientSet.clientSet.
+		RESTClient().
+		Post().
+		Namespace(namespace).
+		Resource("integrationscenarios").
+		Body(&integrationScenario).
+		Do(schedulerClientSet.ctx).
+		Into(&result)
+}
+
 func (schedulerClientSet *SchedulerClientSet) deleteIntegrationScenario(w http.ResponseWriter, req *http.Request)  {
 	vars := mux.Vars(req)
 
