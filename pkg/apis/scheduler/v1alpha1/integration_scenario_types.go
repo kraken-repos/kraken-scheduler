@@ -63,12 +63,20 @@ type DomainExtractionGroupingStrategySpec struct {
 	GroupOperatorType string `json:"groupOperatorType,omitempty"`
 }
 
+type DomainExtractionUseJobTsSpec struct {
+	// +optional
+	UseJobTimestamp string `json:"useJobTimestamp,omitempty"`
+}
+
 type DomainExtractionStrategiesSpec struct {
 	// +required
 	FilterStrategy DomainExtractionFilterStrategySpec `json:"filterStrategy"`
 
 	// +required
 	GroupingStrategy DomainExtractionGroupingStrategySpec `json:"groupingStrategy"`
+
+	// +required
+	UseJobTimestampStrategy DomainExtractionUseJobTsSpec `json:"useJobTimestampStrategy"`
 }
 
 type DomainSchemaRegistrySpec struct {
@@ -198,6 +206,9 @@ type FrameworkParametersSpec struct {
 
 	// +required
 	EventLogPassword SecretValueFromSource `json:"eventLogPassword"`
+
+	// +optional
+	EventBatchThresholdLimit string `json:"eventBatchThresholdLimit"`
 
 	// +required
 	SchemaRegistryEndpoint SecretValueFromSource `json:"schemaRegistryEndpoint"`

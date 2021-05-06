@@ -353,6 +353,12 @@ func (r *Reconciler) FinalizeKind(ctx context.Context, src *v1alpha1.Integration
 		}
 	}
 
+	err = r.KubeClientSet.CoreV1().ConfigMaps(src.Namespace).
+		Delete(ctx, strings.ToLower(src.Spec.RootObjectType) + "-integration-scenario", metav1.DeleteOptions{})
+	if err != nil {
+		return err
+	}
+
 	err = r.deleteKafkaSource(ctx, src)
 	if err != nil {
 		return err
@@ -425,7 +431,7 @@ func (r *Reconciler) RemoveRedisQueues(ctx context.Context, src *v1alpha1.Integr
 	}
 
 	jobTimeTracker := r.ClusterId + "-" + src.Namespace + "-jobTimeTracker" //map[string]time.Time{}
-	jobRestartTracker := r.ClusterId + "-" + src.Namespace + "-jobRestartTracker" //map[string]time.Time{}
+//	jobRestartTracker := r.ClusterId + "-" + src.Namespace + "-jobRestartTracker" //map[string]time.Time{}
 
 	data , err := redisCli.GetAllEntry(jobTimeTracker)
 	if err != nil {
@@ -443,7 +449,7 @@ func (r *Reconciler) RemoveRedisQueues(ctx context.Context, src *v1alpha1.Integr
 		}
 	}
 
-	data , err = redisCli.GetAllEntry(jobRestartTracker)
+/*	data , err = redisCli.GetAllEntry(jobRestartTracker)
 	if err != nil {
 		logging.FromContext(ctx).Info("cannot delete informer cache for " + src.Spec.RootObjectType)
 		return err
@@ -457,7 +463,7 @@ func (r *Reconciler) RemoveRedisQueues(ctx context.Context, src *v1alpha1.Integr
 				return err
 			}
 		}
-	}
+	}*/
 
 	return nil
 }
@@ -968,7 +974,7 @@ func (r *Reconciler) createKafkaSource(ctx context.Context, src *v1alpha1.Integr
 				ConsumerGroup: src.Spec.RootObjectType + "ProcessingTopic",
 				Topics: []string{src.Spec.RootObjectType + "ProcessingTopic"},
 				KafkaAuthSpec: bindingskafkav1beta1.KafkaAuthSpec{
-					BootstrapServers: []string{string(secret.Data[brokerSecretKey])},
+					BootstrapServers: []string{string(secret.Data[brokerSecretKey]), src.Spec.FrameworkParameters.EventBatchThresholdLimit},
 					Net: bindingskafkav1beta1.KafkaNetSpec{
 						SASL: bindingskafkav1beta1.KafkaSASLSpec{
 							Enable: true,

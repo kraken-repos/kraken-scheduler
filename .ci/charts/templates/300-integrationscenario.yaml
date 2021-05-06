@@ -82,11 +82,15 @@ spec:
                           type: string
                         groupOperatorType:
                           type: string
+                    useJobTimestampStrategy:
+                      properties:
+                        useJobTimestamp:
+                          type: string
                 domainSchemaRegistryProps:
                   properties:
                     schemaRegistryRequired:
                       type: string
-                    schemaValidatorGenRequired: 
+                    schemaValidatorGenRequired:
                       type: string
                 additionalProperties:
                   properties:
@@ -146,6 +150,8 @@ spec:
                   properties:
                     secretKeyRef:
                       type: object
+                eventBatchThresholdLimit:
+                  type: string
                 eventLogUser:
                   properties:
                     secretKeyRef:
@@ -161,7 +167,7 @@ spec:
                 schemaRegistryCreds:
                   properties:
                     secretKeyRef:
-                      type: object      
+                      type: object
               type: object
             resources:
               properties:

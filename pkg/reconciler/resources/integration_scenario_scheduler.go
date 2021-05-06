@@ -144,6 +144,10 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs, cu
 			Value: args.Scheduler.Spec.DomainExtractionParameters.IsDemoEnabled,
 		},
 		{
+			Name:  "DOMAIN_EXTRACTOR_USE_JOB_TIMESTAMP",
+			Value: args.Scheduler.Spec.DomainExtractionParameters.DomainExtractionStrategies.UseJobTimestampStrategy.UseJobTimestamp,
+		},
+		{
 			Name:  "FRAMEWORK_PARAMS_PARALLELISM",
 			Value: strconv.Itoa(partitions),
 		},

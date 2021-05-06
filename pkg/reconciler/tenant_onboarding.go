@@ -18,6 +18,7 @@ import (
 	"knative.dev/pkg/logging"
 	"kraken.dev/kraken-scheduler/pkg/apis/scheduler/v1alpha1"
 	"kraken.dev/kraken-scheduler/pkg/messagebroker"
+	"kraken.dev/kraken-scheduler/pkg/reconciler/resources"
 	"kraken.dev/kraken-scheduler/pkg/slack"
 	"strings"
 	"time"
@@ -125,6 +126,7 @@ func (tenantMsgConsumer *TenantMsgConsumer) tenantOnboarding(ctx context.Context
 	}
 
 	if tenant.ImagePullPolicy != "" && !tenant.IsCreate {
+		logging.FromContext(ctx).Info("Got message for updating ImagePullPolicy: ", tenant.TenantId)
 		redisCli := rediscache.RedisCli{
 			Host: strings.Split(tenantMsgConsumer.CacheUrl, ":")[0],
 			Port: strings.Split(tenantMsgConsumer.CacheUrl, ":")[1],
@@ -139,8 +141,10 @@ func (tenantMsgConsumer *TenantMsgConsumer) tenantOnboarding(ctx context.Context
 	}
 
 	if !tenant.IsCreate {
+		logging.FromContext(ctx).Info("Got message for deleting Tenant: ", tenant.TenantId)
 		err = tenantMsgConsumer.tenantDeletion(ctx, &tenant)
 		if err != nil {
+			logging.FromContext(ctx).Info("Error while deleting Tenant: ", err.Error())
 			return err
 		}
 		return nil
@@ -193,16 +197,11 @@ func (tenantMsgConsumer *TenantMsgConsumer) tenantDeletion(ctx context.Context, 
 	namespace := "integration-scenarios-" + tenant.TenantId
 
 	integrationScenarioList, err := tenantMsgConsumer.SchedulerClientSet.ListIntegrationScenarios(namespace)
-	if err != nil {
-		return err
-	}
 
 	for _, is := range integrationScenarioList {
-		err := tenantMsgConsumer.SchedulerClientSet.DelIntegrationScenario(is, namespace)
-		if err != nil {
-			return err
-		}
+		err = tenantMsgConsumer.SchedulerClientSet.DelIntegrationScenario(is, namespace)
 	}
+	logging.FromContext(ctx).Info("deleted IntegrationScenarios for Tenant ", tenant.TenantId)
 
 	redisCli := rediscache.RedisCli{
 		Host: strings.Split(tenantMsgConsumer.CacheUrl, ":")[0],
@@ -213,9 +212,7 @@ func (tenantMsgConsumer *TenantMsgConsumer) tenantDeletion(ctx context.Context, 
 		tenantMsgConsumer.ClusterId + "-" + namespace + "-jobRestartTracker",
 	}
 	err = redisCli.DeleteMap(mapNames)
-	if err != nil {
-		return err
-	}
+	logging.FromContext(ctx).Info("deleted RedisQueues for Tenant ", tenant.TenantId)
 
 	err = tenantMsgConsumer.KubeClientSet.CoreV1().Namespaces().Delete(ctx, namespace, metav1.DeleteOptions{})
 	if err != nil {
@@ -629,40 +626,68 @@ func (tenantMsgConsumer *TenantMsgConsumer) startTenantInformer(ctx context.Cont
 
 					integrationScenarioName := integrationScenarioParts[0] + "-integration-scenario"
 
-					err := tenantMsgConsumer.SchedulerClientSet.DelIntegrationScenario(integrationScenarioName, namespace)
+					cfgMap, err := tenantMsgConsumer.KubeClientSet.CoreV1().ConfigMaps(namespace).
+						Get(ctx, integrationScenarioName, metav1.GetOptions{})
 					if err != nil {
-						logging.FromContext(ctx).Info("Failed to delete Integration Scenario: " + integrationScenarioName +
+						logging.FromContext(ctx).Info("Failed to load Configmap: " + integrationScenarioName +
 							"in namespace: " + namespace)
-					} else {
-						err = tenantMsgConsumer.SlackClient.SendMessage("Integration failed for object: " +
-							integrationScenarioParts[0] + " for tenant: " + namespace)
+					}
+					if cfgMap != nil {
+						integrationScenarioJson := cfgMap.Data[integrationScenarioName]
+						logging.FromContext(ctx).Info("Loaded Configmap: " + integrationScenarioJson +
+							"in namespace: " + namespace)
+
+						err = tenantMsgConsumer.SchedulerClientSet.DelIntegrationScenario(integrationScenarioName, namespace)
 						if err != nil {
-							logging.FromContext(ctx).Error("Failed to post to slack", zap.Error(err))
+							logging.FromContext(ctx).Info("Failed to delete Integration Scenario: " + integrationScenarioName +
+								"in namespace: " + namespace)
+						} else {
+							err = tenantMsgConsumer.SlackClient.SendMessage("Integration failed for object: " +
+								integrationScenarioParts[0] + " for tenant: " + namespace)
+							if err != nil {
+								logging.FromContext(ctx).Error("Failed to post to slack", zap.Error(err))
+							}
+
+							err = tenantMsgConsumer.SlackClient.SendMessage("Deleted Integration Scenario: " + integrationScenarioName +
+								"in namespace: " + namespace + ". Replication will auto-start" +
+								" in " + fmt.Sprintf("%f", timeout.Minutes()) + " mins. Please debug the issue meantime from logs.")
+							if err != nil {
+								logging.FromContext(ctx).Error("Failed to post to slack", zap.Error(err))
+							}
 						}
 
-						err = tenantMsgConsumer.SlackClient.SendMessage("Deleted Integration Scenario: " + integrationScenarioName +
+						err = redisCli.DeleteEntry(jobTimeTracker, pod)
+						if err != nil {
+							logging.FromContext(ctx).Info("Failed to delete pod to redis:" + pod)
+						}
+						logging.FromContext(ctx).Info("Deleted Integration Scenario: " + integrationScenarioName +
 							"in namespace: " + namespace + ". Replication will auto-start" +
 							" in " + fmt.Sprintf("%f", timeout.Minutes()) + " mins. Please debug the issue meantime from logs.")
-						if err != nil {
-							logging.FromContext(ctx).Error("Failed to post to slack", zap.Error(err))
+
+						integrationScenarioCfgMap := corev1.ConfigMap{
+							ObjectMeta: metav1.ObjectMeta{
+								Name: integrationScenarioName,
+								Labels: resources.GetLabels(integrationScenarioName, "", ""),
+							},
+							Data: map[string]string{
+								integrationScenarioName: integrationScenarioJson,
+							},
 						}
-					}
 
-					err = redisCli.DeleteEntry(jobTimeTracker, pod)
-					if err != nil {
-						logging.FromContext(ctx).Info("Failed to delete pod to redis:" + pod)
-					}
-					logging.FromContext(ctx).Info("Deleted Integration Scenario: " + integrationScenarioName +
-						"in namespace: " + namespace + ". Replication will auto-start" +
-						" in " + fmt.Sprintf("%f", timeout.Minutes()) + " mins. Please debug the issue meantime from logs.")
+						_, err = tenantMsgConsumer.KubeClientSet.CoreV1().ConfigMaps(namespace).
+							Create(ctx, &integrationScenarioCfgMap, metav1.CreateOptions{})
+						if err != nil {
+							logging.FromContext(ctx).Error(err.Error())
+						}
 
-					err = redisCli.SetEntry(jobRestartTracker, integrationScenarioName + ":" + namespace, time.Now())
-					if err != nil {
-						logging.FromContext(ctx).Info("Failed to save pod to redis:" + integrationScenarioName + ":" + namespace)
+						err = redisCli.SetEntry(jobRestartTracker, integrationScenarioName+":"+namespace, time.Now())
+						if err != nil {
+							logging.FromContext(ctx).Info("Failed to save pod to redis:" + integrationScenarioName + ":" + namespace)
+						}
 					}
 				}
 			}
-			time.Sleep(1 * time.Minute)
+			time.Sleep(time.Duration(timeoutInMins/2) * time.Minute)
 		}
 	}()
 
@@ -725,10 +750,16 @@ func (tenantMsgConsumer *TenantMsgConsumer) startTenantInformer(ctx context.Cont
 						} else {
 							logging.FromContext(ctx).Info("Failed to load Configmap: " + integrationScenario +
 								"in namespace: " + integrationScenarioNs)
+
+							err = redisCli.DeleteEntry(jobRestartTracker, pod)
+							if err != nil {
+								logging.FromContext(ctx).Info("Failed to delete pod to redis:" + pod)
+							}
 						}
 					}
 				}
 			}
+			time.Sleep(time.Duration(timeoutInMins/2) * time.Minute)
 		}
 	}()
 
