@@ -415,13 +415,17 @@ func (r *Reconciler) RemoveRedisQueues(ctx context.Context, src *v1alpha1.Integr
 	}
 
 	for k, _ := range res {
-		if strings.Contains(k, src.Spec.TenantId) && strings.Contains(k, src.Spec.DomainExtractionParameters.EntitySetName) {
-			err = client.DeleteKeyFromMapCache(ctx, delMap, k)
-			if err != nil {
-				logging.FromContext(ctx).Info("cannot delete deltaTimestamp for " + src.Spec.RootObjectType)
-				return err
+		entitySetNames := strings.Split(src.Spec.DomainExtractionParameters.EntitySetName, ";")
+
+		for _, entitySetName := range entitySetNames {
+			if strings.Contains(k, src.Spec.TenantId) && strings.Contains(k, entitySetName) {
+				err = client.DeleteKeyFromMapCache(ctx, delMap, k)
+				if err != nil {
+					logging.FromContext(ctx).Info("cannot delete deltaTimestamp for " + src.Spec.RootObjectType)
+					return err
+				}
+				break
 			}
-			break
 		}
 	}
 
