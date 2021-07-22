@@ -56,6 +56,12 @@ func NewController(
 		return nil
 	}
 
+	k8sTimezone, defined := os.LookupEnv(componentTimezoneEnvVar)
+	if !defined {
+		logging.FromContext(ctx).Errorf("required environment variable '%s' not defined", componentTimezoneEnvVar)
+		return nil
+	}
+
 	integrationScenarioInformer := integrationscenarioinformer.Get(ctx)
 	deploymentInformer := deploymentinformer.Get(ctx)
 
@@ -86,6 +92,7 @@ func NewController(
 		loggingContext:			  ctx,
 		SlackClient: 			  &slackClient,
 		ClusterId:     			  k8sCluster,
+		Timezone:  				  k8sTimezone,
 		CentralCacheUrl: 		  cacheUrl,
 		IsRedisEmbedded:  		  isRedisEmbedded,
 		IsPrinted: 				  false,
@@ -105,7 +112,15 @@ func NewController(
 	cmw.Watch(logging.ConfigMapName(), c.UpdateFromLoggingConfigMap)
 	cmw.Watch(metrics.ConfigMapName(), c.UpdateFromMetricsConfigMap)
 
-	schedulerClientSet := StartHTTPServer(ctx, c)
+	clientSet, err := BootstrapServer(ctx)
+	if err != nil {
+		logging.FromContext(ctx).Errorf(err.Error())
+	}
+
+	schedulerClientSet := SchedulerClientSet{
+		ctx: 		ctx,
+		clientSet:  clientSet,
+	}
 
 	tenantMsgConsumer := TenantMsgConsumer{
 		KubeClientSet: c.KubeClientSet,
@@ -121,6 +136,7 @@ func NewController(
 		KubeClientSet: c.KubeClientSet,
 		SchedulerClientSet: &schedulerClientSet,
 	}
+	StartHTTPServer(&integrationScenarioMsgConsumer)
 
 	brokerUrl, brokerUser, brokerPassword, err := GetKafkaCredentialsFromEnvVar(ctx)
 	if err != nil {

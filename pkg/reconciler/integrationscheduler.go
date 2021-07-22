@@ -47,6 +47,7 @@ const (
 	component							  = "integration-framework-scheduler"
 	componentClusterEnvVar				  = "K8S_CLUSTER"
 	componentNamespaceEnvVar			  = "K8S_NAMESPACE"
+	componentTimezoneEnvVar				  = "K8S_TIMEZONE"
 	kafkaBrokerEnvVar					  = "KAFKA_BROKER_URL"
 	kafkaBrokerSASLUserEnvVar			  = "KAFKA_BROKER_SASL_USER"
 	kafkaBrokerSASLPasswordEnvVar    	  = "KAFKA_BROKER_SASL_PASSWORD"
@@ -99,6 +100,7 @@ type Reconciler struct {
 	SlackClient *slack.Client
 	CentralCacheUrl string
 	ClusterId   string
+	Timezone 	string
 	IsPrinted   bool
 	IsRedisEmbedded bool
 }
@@ -153,11 +155,18 @@ func (r *Reconciler) ReconcileKind(ctx context.Context, src *v1alpha1.Integratio
 		}
 	}
 
-	integrationSchedulers, err := r.createIntegrationScenarioDeployers(ctx, svcUrl, redis, r.ClusterId, src)
+	integrationSchedulers, err := r.createIntegrationScenarioDeployers(ctx, svcUrl, redis, r.ClusterId, r.Timezone, src)
+
+	if !isDemoEnabled {
+		errSlack := r.SlackClient.SendMessage("Deployed integration scenario: " + src.Name + " in namespace: " + src.Namespace)
+		if errSlack != nil {
+			logging.FromContext(ctx).Error("Failed to post to slack", zap.Error(err))
+		}
+	}
 	if err != nil {
 		logging.FromContext(ctx).Error("Unable to create the integration scenario schedulers", zap.Error(err))
 
-		if !r.IsPrinted {
+		if !r.IsPrinted && isDemoEnabled {
 			err = r.SlackClient.SendMessage("Deployed integration scenario: " + src.Name + " in namespace: " + src.Namespace)
 			if err != nil {
 				logging.FromContext(ctx).Error("Failed to post to slack", zap.Error(err))
@@ -171,13 +180,6 @@ func (r *Reconciler) ReconcileKind(ctx context.Context, src *v1alpha1.Integratio
 		return err
 	}
 	src.Status.MarkDeployed(integrationSchedulers)
-
-	if !isDemoEnabled {
-		err = r.SlackClient.SendMessage("Deployed integration scenario: " + src.Name + " in namespace: " + src.Namespace)
-		if err != nil {
-			logging.FromContext(ctx).Error("Failed to post to slack", zap.Error(err))
-		}
-	}
 
 	return nil
 }
@@ -356,7 +358,7 @@ func (r *Reconciler) FinalizeKind(ctx context.Context, src *v1alpha1.Integration
 	err = r.KubeClientSet.CoreV1().ConfigMaps(src.Namespace).
 		Delete(ctx, strings.ToLower(src.Spec.RootObjectType) + "-integration-scenario", metav1.DeleteOptions{})
 	if err != nil {
-		return err
+//		return err
 	}
 
 	err = r.deleteKafkaSource(ctx, src)
@@ -369,9 +371,19 @@ func (r *Reconciler) FinalizeKind(ctx context.Context, src *v1alpha1.Integration
 		return err
 	}
 
-	err = r.removeKafkaTopic(ctx, src)
-	if err != nil {
-		return err
+	if src.Spec.FrameworkParameters.ForceTopicDeletion != "" {
+		forceTopicDeletion, _ := strconv.ParseBool(src.Spec.FrameworkParameters.ForceTopicDeletion)
+		if forceTopicDeletion {
+			err = r.removeKafkaTopic(ctx, src)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		err = r.removeKafkaTopic(ctx, src)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = r.RemoveRedisQueues(ctx, src)
@@ -501,7 +513,7 @@ func checkResourcesStatus(src *v1alpha1.IntegrationScenario) error {
 	return nil
 }
 
-func (r *Reconciler) createIntegrationScenarioDeployers(ctx context.Context, svcUrl string, redisIp string, clusterId string, src *v1alpha1.IntegrationScenario) ([]batchv1beta1.CronJob, error) {
+func (r *Reconciler) createIntegrationScenarioDeployers(ctx context.Context, svcUrl string, redisIp string, clusterId string, timezone string, src *v1alpha1.IntegrationScenario) ([]batchv1beta1.CronJob, error) {
 	if err := checkResourcesStatus(src); err != nil {
 		return nil, err
 	}
@@ -520,7 +532,7 @@ func (r *Reconciler) createIntegrationScenarioDeployers(ctx context.Context, svc
 		WaitQueueProducerImage:  r.waitQueueProducerImage,
 		WaitQueueProcessorImage: r.waitQueueProcessorImage,
 		Scheduler: 				 src,
-		Labels: 				 resources.GetLabels(src.Name, "", ""),
+		Labels: 				 resources.GetLabels(src.Name, src.Spec.TenantId, src.Spec.AppTenantId, src.Spec.RootObjectType + "-cronjob"),
 		LoggingConfig: 			 loggingConfig,
 		MetricsConfig: 			 metricsConfig,
 	}
@@ -529,7 +541,7 @@ func (r *Reconciler) createIntegrationScenarioDeployers(ctx context.Context, svc
 		strconv.FormatBool(r.IsRedisEmbedded))
 
 	logging.FromContext(ctx).Info("Deploying CronJobs for Integration Scenario " + src.Spec.RootObjectType)
-	expected := resources.MakeIntegrationScenarioScheduler(&integrationScenarioSchedulerArgs, src.Namespace, svcUrl, redisIp, clusterId)
+	expected := resources.MakeIntegrationScenarioScheduler(&integrationScenarioSchedulerArgs, src.Namespace, svcUrl, redisIp, clusterId, timezone)
 
 	jobRunning := false
 
@@ -634,7 +646,7 @@ func (r *Reconciler) createSchemaRegistry(ctx context.Context, src *v1alpha1.Int
 		schemaUpdaterPod := corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: strings.ToLower(src.Spec.RootObjectType) + "-schema-updater",
-				Labels: resources.GetLabels(src.Name, "", ""),
+				Labels: resources.GetLabels(src.Name, src.Spec.TenantId, src.Spec.AppTenantId, src.Spec.RootObjectType + "-schema-updater"),
 			},
 			Spec: corev1.PodSpec{
 				RestartPolicy: "Never",
@@ -664,7 +676,7 @@ func (r *Reconciler) createSchemaRegistry(ctx context.Context, src *v1alpha1.Int
 		imageBuilderPod := corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: strings.ToLower(src.Spec.RootObjectType) + "-image-builder",
-				Labels: resources.GetLabels(src.Name, "", ""),
+				Labels: resources.GetLabels(src.Name, src.Spec.TenantId, src.Spec.AppTenantId, src.Spec.RootObjectType + "-image-builder"),
 			},
 			Spec: corev1.PodSpec{
 				RestartPolicy:      "Never",
@@ -754,7 +766,7 @@ func (r *Reconciler) createSchemaRegistry(ctx context.Context, src *v1alpha1.Int
 	schemaValidatorPod := servingv1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "kraken-schema-validator-" + strings.ToLower(src.Spec.RootObjectType),
-			Labels: resources.GetLabels(src.Name, "", ""),
+			Labels: resources.GetLabels(src.Name, src.Spec.TenantId, src.Spec.AppTenantId, src.Spec.RootObjectType + "-schema-validator"),
 		},
 		Spec: servingv1.ServiceSpec{
 			ConfigurationSpec: servingv1.ConfigurationSpec{
@@ -842,6 +854,9 @@ func (r *Reconciler) createTransformer(ctx context.Context, src *v1alpha1.Integr
 	if partitions%2 == 0 {
 		partitions = partitions/2
 	}
+	if src.Spec.FrameworkParameters.EventLogOutboundPartitions != "" {
+		partitions, _ = strconv.Atoi(src.Spec.FrameworkParameters.EventLogOutboundPartitions)
+	}
 
 	transformerEnv := []corev1.EnvVar{
 		{
@@ -887,7 +902,7 @@ func (r *Reconciler) createTransformer(ctx context.Context, src *v1alpha1.Integr
 	transformerPod := servingv1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: strings.ToLower(src.Spec.RootObjectType) + "-integration-transformer",
-			Labels: resources.GetLabels(src.Name, "", ""),
+			Labels: resources.GetLabels(src.Name, src.Spec.TenantId, src.Spec.AppTenantId, src.Spec.RootObjectType + "-transformer"),
 		},
 		Spec: servingv1.ServiceSpec{
 			ConfigurationSpec: servingv1.ConfigurationSpec{
@@ -972,7 +987,7 @@ func (r *Reconciler) createKafkaSource(ctx context.Context, src *v1alpha1.Integr
 		kafkaSourcePod := eventingkafkav1beta1.KafkaSource{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: strings.ToLower(src.Spec.RootObjectType) + "-kafka-source"+ strconv.Itoa(instance),
-				Labels: resources.GetLabels(src.Name, "", ""),
+				Labels: resources.GetLabels(src.Name, src.Spec.TenantId, src.Spec.AppTenantId, src.Spec.RootObjectType + "-kafka-source"),
 			},
 			Spec: eventingkafkav1beta1.KafkaSourceSpec{
 				ConsumerGroup: src.Spec.RootObjectType + "ProcessingTopic",

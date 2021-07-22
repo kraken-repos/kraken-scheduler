@@ -60,6 +60,8 @@ spec:
                   type: string
                 isDeltaTimeRangeConsidered:
                   type: string
+                domainStartPacketsFrom:
+                  type: string
                 domainExtractionStrategies:
                   properties:
                     filterStrategy:
@@ -151,6 +153,10 @@ spec:
                     secretKeyRef:
                       type: object
                 eventBatchThresholdLimit:
+                  type: string
+                intervalBetweenCalls:
+                  type: string
+                eventLogOutboundPartitions:
                   type: string
                 eventLogUser:
                   properties:

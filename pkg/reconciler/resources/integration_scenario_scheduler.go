@@ -48,7 +48,7 @@ func SerializeArray(data []v1alpha1.DomainExtractionParametersSpec) string {
 	return string(jsonData)
 }
 
-func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs, currNs string, svcUrl string, redisIp string, clusterId string) []batchv1beta1.CronJob {
+func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs, currNs string, svcUrl string, redisIp string, clusterId string, timezone string) []batchv1beta1.CronJob {
 	partitions, _ := strconv.Atoi(args.Scheduler.Spec.FrameworkParameters.Parallelism)
 	if partitions%2 == 0 {
 		partitions = partitions/2
@@ -148,6 +148,10 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs, cu
 			Value: args.Scheduler.Spec.DomainExtractionParameters.DomainExtractionStrategies.UseJobTimestampStrategy.UseJobTimestamp,
 		},
 		{
+			Name:  "DOMAIN_EXTRACTOR_START_PACKETS_FROM",
+			Value: args.Scheduler.Spec.DomainExtractionParameters.DomainStartPacketsFrom,
+		},
+		{
 			Name:  "FRAMEWORK_PARAMS_PARALLELISM",
 			Value: strconv.Itoa(partitions),
 		},
@@ -192,6 +196,14 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs, cu
 		{
 			Name: "FRAMEWORK_PARAMS_REDIS_IP",
 			Value: redisIp,
+		},
+		{
+			Name: "FRAMEWORK_PARAMS_TIMEZONE",
+			Value: timezone,
+		},
+		{
+			Name: "FRAMEWORK_PARAMS_INTERVAL_CALLS",
+			Value: args.Scheduler.Spec.FrameworkParameters.IntervalBetweenCalls,
 		},
 		{
 			Name:  "ADDL_PARAMS_SAP_CLIENT",

@@ -3,7 +3,9 @@ package scheduler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/Shopify/sarama"
+	"github.com/gorilla/mux"
 	errors2 "github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,6 +14,8 @@ import (
 	"kraken.dev/kraken-scheduler/pkg/apis/scheduler/v1alpha1"
 	"kraken.dev/kraken-scheduler/pkg/messagebroker"
 	"kraken.dev/kraken-scheduler/pkg/reconciler/resources"
+	"kraken.dev/kraken-scheduler/pkg/client/clientset/versioned/scheme"
+	"net/http"
 )
 
 type IntegrationScenarioMsgConsumer struct {
@@ -113,7 +117,7 @@ func (msgConsumer *IntegrationScenarioMsgConsumer) createIntegrationScenario(ctx
 	integrationScenarioCfgMap := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: integrationScenarioContent.Name,
-			Labels: resources.GetLabels(integrationScenarioContent.Name, "", ""),
+			Labels: resources.GetLabels(integrationScenarioContent.Name, "", "", ""),
 		},
 		Data: map[string]string{
 			integrationScenarioContent.Name: string(integrationScenarioBytes),
@@ -149,4 +153,188 @@ func (msgConsumer *IntegrationScenarioMsgConsumer) deleteIntegrationScenario(ctx
 	}
 
 	return nil
+}
+
+func (msgConsumer *IntegrationScenarioMsgConsumer) delIntegrationScenario(w http.ResponseWriter, req *http.Request)  {
+	vars := mux.Vars(req)
+
+	namespace := vars["namespace"]
+
+	name := vars["name"]
+
+	result := v1alpha1.IntegrationScenario{}
+
+	err := msgConsumer.SchedulerClientSet.clientSet.
+		RESTClient().
+		Delete().
+		Namespace(namespace).
+		Resource("integrationscenarios").
+		Name(name).
+		VersionedParams(&metav1.DeleteOptions{}, scheme.ParameterCodec).
+		Do(msgConsumer.SchedulerClientSet.ctx).
+		Into(&result)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(204)
+
+	_, err = fmt.Fprintf(w, "")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+}
+
+func (msgConsumer *IntegrationScenarioMsgConsumer) getIntegrationScenario(w http.ResponseWriter, req *http.Request)  {
+	vars := mux.Vars(req)
+
+	namespace := vars["namespace"]
+
+	name := vars["name"]
+
+	integrationScenario := v1alpha1.IntegrationScenario{}
+
+	err := msgConsumer.SchedulerClientSet.clientSet.
+		RESTClient().
+		Get().
+		Namespace(namespace).
+		Resource("integrationscenarios").
+		Name(name).
+		VersionedParams(&metav1.GetOptions{}, scheme.ParameterCodec).
+		Do(msgConsumer.SchedulerClientSet.ctx).
+		Into(&integrationScenario)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	resp, err := json.Marshal(IntegrationScenarioResp{
+		TenantId:       integrationScenario.Spec.TenantId,
+		AppTenantId:    integrationScenario.Spec.RootObjectType,
+		RootObjectType: integrationScenario.Spec.RootObjectType,
+		Name: 			integrationScenario.Name,
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	_, err = fmt.Fprintf(w, string(resp))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+}
+
+func (msgConsumer *IntegrationScenarioMsgConsumer) listIntegrationScenarios(w http.ResponseWriter, req *http.Request)  {
+	vars := mux.Vars(req)
+
+	namespace := vars["namespace"]
+
+	opts := metav1.ListOptions{}
+
+	result := v1alpha1.IntegrationScenarioList{}
+
+	err := msgConsumer.SchedulerClientSet.
+		clientSet.
+		RESTClient().
+		Get().
+		Namespace(namespace).
+		Resource("integrationscenarios").
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Do(msgConsumer.SchedulerClientSet.ctx).
+		Into(&result)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var integrationScenarioListResp []IntegrationScenarioResp
+	for _, is := range result.Items {
+		integrationScenarioListResp =
+			append(integrationScenarioListResp, IntegrationScenarioResp{
+				TenantId: is.Spec.TenantId,
+				AppTenantId: is.Spec.AppTenantId,
+				RootObjectType: is.Spec.RootObjectType,
+				Name: is.Name,
+			})
+	}
+
+	resp, err := json.Marshal(integrationScenarioListResp)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	_, err = fmt.Fprintf(w, string(resp))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+}
+
+func (msgConsumer *IntegrationScenarioMsgConsumer) postIntegrationScenario(w http.ResponseWriter, req *http.Request)  {
+	var integrationScenarioContent	IntegrationScenarioContent
+
+	err := json.NewDecoder(req.Body).Decode(&integrationScenarioContent)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = msgConsumer.createIntegrationScenario(msgConsumer.SchedulerClientSet.ctx, &integrationScenarioContent)
+	integrationScenario := integrationScenarioContent.Scenario
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	resp, err := json.Marshal(IntegrationScenarioResp{
+		TenantId:       integrationScenario.Spec.TenantId,
+		AppTenantId:    integrationScenario.Spec.RootObjectType,
+		RootObjectType: integrationScenario.Spec.RootObjectType,
+		Name: integrationScenario.Name,
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	_, err = fmt.Fprintf(w, string(resp))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+}
+
+func StartHTTPServer(msgConsumer *IntegrationScenarioMsgConsumer) {
+	r := mux.NewRouter()
+
+	go func() {
+		r.HandleFunc("/postIntegrationScenario/{namespace}", msgConsumer.postIntegrationScenario).
+			Methods("POST")
+		r.HandleFunc("/listIntegrationScenarios/{namespace}", msgConsumer.listIntegrationScenarios).
+			Methods("GET")
+		r.HandleFunc("/getIntegrationScenario/{namespace}/{name}", msgConsumer.getIntegrationScenario).
+			Methods("GET")
+		r.HandleFunc("/deleteIntegrationScenario/{namespace}/{name}", msgConsumer.delIntegrationScenario).
+			Methods("DELETE")
+		http.ListenAndServe(":443", r)
+	}()
 }

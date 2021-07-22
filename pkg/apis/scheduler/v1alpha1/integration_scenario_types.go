@@ -136,6 +136,9 @@ type DomainExtractionParametersSpec struct {
 	DomainSchemaRegistryProps DomainSchemaRegistrySpec `json:"domainSchemaRegistryProps"`
 
 	// +optional
+	DomainStartPacketsFrom string `json:"domainStartPacketsFrom"`
+
+	// +optional
 	IsDemoEnabled string `json:"isDemoEnabled"`
 
 	// +optional
@@ -208,7 +211,16 @@ type FrameworkParametersSpec struct {
 	EventLogPassword SecretValueFromSource `json:"eventLogPassword"`
 
 	// +optional
+	EventLogOutboundPartitions string `json:"eventLogOutboundPartitions"`
+
+	// +optional
 	EventBatchThresholdLimit string `json:"eventBatchThresholdLimit"`
+
+	// +optional
+	ForceTopicDeletion string `json:"forceTopicDeletion"`
+
+	// +optional
+	IntervalBetweenCalls string `json:"intervalBetweenCalls"`
 
 	// +required
 	SchemaRegistryEndpoint SecretValueFromSource `json:"schemaRegistryEndpoint"`

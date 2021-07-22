@@ -667,7 +667,7 @@ func (tenantMsgConsumer *TenantMsgConsumer) startTenantInformer(ctx context.Cont
 						integrationScenarioCfgMap := corev1.ConfigMap{
 							ObjectMeta: metav1.ObjectMeta{
 								Name: integrationScenarioName,
-								Labels: resources.GetLabels(integrationScenarioName, "", ""),
+								Labels: resources.GetLabels(integrationScenarioName, "", "", ""),
 							},
 							Data: map[string]string{
 								integrationScenarioName: integrationScenarioJson,
