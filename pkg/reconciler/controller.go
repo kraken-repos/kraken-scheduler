@@ -119,6 +119,7 @@ func NewController(
 
 	schedulerClientSet := SchedulerClientSet{
 		ctx: 		ctx,
+		reconciler: c,
 		clientSet:  clientSet,
 	}
 

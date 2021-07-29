@@ -2,6 +2,8 @@ package scheduler
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/rest"
@@ -9,10 +11,13 @@ import (
 	"kraken.dev/kraken-scheduler/pkg/apis/scheduler/v1alpha1"
 	"kraken.dev/kraken-scheduler/pkg/client/clientset/versioned/scheme"
 	schedulerv1alpha1 "kraken.dev/kraken-scheduler/pkg/client/clientset/versioned/typed/scheduler/v1alpha1"
+	"net/http"
+	"strings"
 )
 
 type SchedulerClientSet struct {
 	ctx 	   context.Context
+	reconciler *Reconciler
 	clientSet  *schedulerv1alpha1.SchedulerV1alpha1Client
 }
 
@@ -21,6 +26,41 @@ type IntegrationScenarioResp struct {
 	AppTenantId    string
 	RootObjectType string
 	Name		   string
+}
+
+func (schedulerClientSet *SchedulerClientSet) listTenants(w http.ResponseWriter, req *http.Request)  {
+	nsList, err := schedulerClientSet.reconciler.
+		KubeClientSet.
+		CoreV1().
+		Namespaces().
+		List(context.Background(), metav1.ListOptions{})
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var namespaces []string
+	for _, ns := range nsList.Items {
+		if strings.HasPrefix(ns.Name, "integration-scenarios") {
+			namespaces = append(namespaces, ns.Name)
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	resp, err := json.Marshal(namespaces)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	_, err = fmt.Fprintf(w, string(resp))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 }
 
 func (schedulerClientSet *SchedulerClientSet) DelIntegrationScenario(name, namespace string) error {

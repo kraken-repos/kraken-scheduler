@@ -12,9 +12,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"knative.dev/pkg/logging"
 	"kraken.dev/kraken-scheduler/pkg/apis/scheduler/v1alpha1"
+	"kraken.dev/kraken-scheduler/pkg/client/clientset/versioned/scheme"
 	"kraken.dev/kraken-scheduler/pkg/messagebroker"
 	"kraken.dev/kraken-scheduler/pkg/reconciler/resources"
-	"kraken.dev/kraken-scheduler/pkg/client/clientset/versioned/scheme"
 	"net/http"
 )
 
@@ -213,12 +213,7 @@ func (msgConsumer *IntegrationScenarioMsgConsumer) getIntegrationScenario(w http
 		return
 	}
 
-	resp, err := json.Marshal(IntegrationScenarioResp{
-		TenantId:       integrationScenario.Spec.TenantId,
-		AppTenantId:    integrationScenario.Spec.RootObjectType,
-		RootObjectType: integrationScenario.Spec.RootObjectType,
-		Name: 			integrationScenario.Name,
-	})
+	resp, err := json.Marshal(integrationScenario.Spec)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -327,14 +322,16 @@ func StartHTTPServer(msgConsumer *IntegrationScenarioMsgConsumer) {
 	r := mux.NewRouter()
 
 	go func() {
-		r.HandleFunc("/postIntegrationScenario/{namespace}", msgConsumer.postIntegrationScenario).
+		r.HandleFunc("/kraken/postIntegrationScenario/{namespace}", msgConsumer.postIntegrationScenario).
 			Methods("POST")
-		r.HandleFunc("/listIntegrationScenarios/{namespace}", msgConsumer.listIntegrationScenarios).
+		r.HandleFunc("/kraken/listIntegrationScenarios/{namespace}", msgConsumer.listIntegrationScenarios).
 			Methods("GET")
-		r.HandleFunc("/getIntegrationScenario/{namespace}/{name}", msgConsumer.getIntegrationScenario).
+		r.HandleFunc("/kraken/getIntegrationScenario/{namespace}/{name}", msgConsumer.getIntegrationScenario).
 			Methods("GET")
-		r.HandleFunc("/deleteIntegrationScenario/{namespace}/{name}", msgConsumer.delIntegrationScenario).
+		r.HandleFunc("/kraken/deleteIntegrationScenario/{namespace}/{name}", msgConsumer.delIntegrationScenario).
 			Methods("DELETE")
+		r.HandleFunc("/kraken/listAllTenants", msgConsumer.SchedulerClientSet.listTenants).
+			Methods("GET")
 		http.ListenAndServe(":443", r)
 	}()
 }
