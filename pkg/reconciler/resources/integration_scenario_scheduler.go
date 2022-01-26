@@ -376,11 +376,28 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs, cu
 		imagePullPolicy = corev1.PullIfNotPresent
 	}
 
+	labels := args.Labels
+	appLabel := labels["app"]
+	prodCronjobLabel := appLabel + "-prod"
+	procCronjobLabel := appLabel + "-proc"
+
+	prodCronjobLabels := make(map[string]string)
+	for key, value := range labels {
+		prodCronjobLabels[key] = value
+	}
+	prodCronjobLabels["app"] = prodCronjobLabel
+
+	procCronjobLabels := make(map[string]string)
+	for key, value := range labels {
+		procCronjobLabels[key] = value
+	}
+	procCronjobLabels["app"] = procCronjobLabel
+
 	cronJobForWaitQueueProducer := batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: GenerateFixedName(args.Scheduler, fmt.Sprintf(strings.ToLower(rootObjectType) + "-prod")),
 			Namespace: args.Scheduler.Namespace,
-			Labels: args.Labels,
+			Labels: prodCronjobLabels,
 			OwnerReferences: []metav1.OwnerReference{
 				*kmeta.NewControllerRef(args.Scheduler),
 			},
@@ -391,7 +408,7 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs, cu
 				Spec: batchv1.JobSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
-							Labels: args.Labels,
+							Labels: prodCronjobLabels,
 						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: "Never",
@@ -421,7 +438,7 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs, cu
 		ObjectMeta: metav1.ObjectMeta{
 			Name: GenerateFixedName(args.Scheduler, fmt.Sprintf(strings.ToLower(rootObjectType) + "-proc")),
 			Namespace: args.Scheduler.Namespace,
-			Labels: args.Labels,
+			Labels: procCronjobLabels,
 			OwnerReferences: []metav1.OwnerReference{
 				*kmeta.NewControllerRef(args.Scheduler),
 			},
@@ -433,7 +450,7 @@ func MakeIntegrationScenarioScheduler(args *IntegrationScenarioSchedulerArgs, cu
 					Parallelism: &parallel,
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
-							Labels: args.Labels,
+							Labels: procCronjobLabels,
 						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: "Never",

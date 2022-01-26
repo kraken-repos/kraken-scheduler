@@ -66,7 +66,7 @@ func NewController(
 	deploymentInformer := deploymentinformer.Get(ctx)
 
 	slackClient := slack.Client{
-		WebHookURL: "https://hooks.slack.com/services/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",
+		WebHookURL: "https://hooks.slack.com/services/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",
 		Timeout: 5 * time.Second,
 	}
 
