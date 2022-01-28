@@ -7,6 +7,7 @@ import (
 	"github.com/Shopify/sarama"
 	"github.com/gorilla/mux"
 	errors2 "github.com/pkg/errors"
+	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -15,7 +16,9 @@ import (
 	"kraken.dev/kraken-scheduler/pkg/client/clientset/versioned/scheme"
 	"kraken.dev/kraken-scheduler/pkg/messagebroker"
 	"kraken.dev/kraken-scheduler/pkg/reconciler/resources"
+	"log"
 	"net/http"
+	"strings"
 )
 
 type IntegrationScenarioMsgConsumer struct {
@@ -160,6 +163,19 @@ func (msgConsumer *IntegrationScenarioMsgConsumer) delIntegrationScenario(w http
 
 	namespace := vars["namespace"]
 
+	accessToken := req.Header.Get("Authorization")
+
+	if accessToken == "" {
+		logging.FromContext(msgConsumer.SchedulerClientSet.ctx).Info("Access Token auth failed")
+		http.Error(w, "Forbidden", http.StatusForbidden)
+	}
+
+	if !msgConsumer.SchedulerClientSet.doAuthentication(accessToken) {
+		logging.FromContext(msgConsumer.SchedulerClientSet.ctx).Info("Access Token auth failed")
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
 	name := vars["name"]
 
 	result := v1alpha1.IntegrationScenario{}
@@ -193,6 +209,19 @@ func (msgConsumer *IntegrationScenarioMsgConsumer) getIntegrationScenario(w http
 	vars := mux.Vars(req)
 
 	namespace := vars["namespace"]
+
+	accessToken := req.Header.Get("Authorization")
+
+	if accessToken == "" {
+		logging.FromContext(msgConsumer.SchedulerClientSet.ctx).Info("Access Token auth failed")
+		http.Error(w, "Forbidden", http.StatusForbidden)
+	}
+
+	if !msgConsumer.SchedulerClientSet.doAuthentication(accessToken) {
+		logging.FromContext(msgConsumer.SchedulerClientSet.ctx).Info("Access Token auth failed")
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
 
 	name := vars["name"]
 
@@ -233,6 +262,19 @@ func (msgConsumer *IntegrationScenarioMsgConsumer) listIntegrationScenarios(w ht
 	vars := mux.Vars(req)
 
 	namespace := vars["namespace"]
+
+	accessToken := req.Header.Get("Authorization")
+	if accessToken == "" {
+		logging.FromContext(msgConsumer.SchedulerClientSet.ctx).Info("Access Token passed")
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	if !msgConsumer.SchedulerClientSet.doAuthentication(accessToken) {
+		logging.FromContext(msgConsumer.SchedulerClientSet.ctx).Info("Access Token auth failed")
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
 
 	opts := metav1.ListOptions{}
 
@@ -281,6 +323,19 @@ func (msgConsumer *IntegrationScenarioMsgConsumer) listIntegrationScenarios(w ht
 }
 
 func (msgConsumer *IntegrationScenarioMsgConsumer) postIntegrationScenario(w http.ResponseWriter, req *http.Request)  {
+	accessToken := req.Header.Get("Authorization")
+
+	if accessToken == "" {
+		logging.FromContext(msgConsumer.SchedulerClientSet.ctx).Info("Access Token auth failed")
+		http.Error(w, "Forbidden", http.StatusForbidden)
+	}
+
+	if !msgConsumer.SchedulerClientSet.doAuthentication(accessToken) {
+		logging.FromContext(msgConsumer.SchedulerClientSet.ctx).Info("Access Token auth failed")
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
 	var integrationScenarioContent	IntegrationScenarioContent
 
 	err := json.NewDecoder(req.Body).Decode(&integrationScenarioContent)
@@ -316,6 +371,39 @@ func (msgConsumer *IntegrationScenarioMsgConsumer) postIntegrationScenario(w htt
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+}
+
+func(schedulerClientSet *SchedulerClientSet) doAuthentication(accessToken string) bool {
+	client := http.Client{}
+	req, err := http.NewRequest("GET", "http://oauth-server:9096/oauth/validate", nil)
+	if err != nil {
+		logging.FromContext(schedulerClientSet.ctx).Info("Connect to auth server failed")
+		return false
+	}
+
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", accessToken)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		logging.FromContext(schedulerClientSet.ctx).Info("Request to auth server failed")
+		return false
+	}
+
+	defer resp.Body.Close()
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		logging.FromContext(schedulerClientSet.ctx).Info("Cannot get response from auth server")
+		return false
+	}
+	bodyStr := string(bodyBytes)
+
+	if strings.Contains(bodyStr, "Valid token") && resp.StatusCode == 200 {
+		log.Println("success")
+		return true
+	}
+	return false
 }
 
 func StartHTTPServer(msgConsumer *IntegrationScenarioMsgConsumer) {

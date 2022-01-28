@@ -29,6 +29,19 @@ type IntegrationScenarioResp struct {
 }
 
 func (schedulerClientSet *SchedulerClientSet) listTenants(w http.ResponseWriter, req *http.Request)  {
+	accessToken := req.Header.Get("Authorization")
+
+	if accessToken == "" {
+		logging.FromContext(schedulerClientSet.ctx).Info("Access Token auth failed")
+		http.Error(w, "Forbidden", http.StatusForbidden)
+	}
+
+	if !schedulerClientSet.doAuthentication(accessToken) {
+		logging.FromContext(schedulerClientSet.ctx).Info("Access Token auth failed")
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
 	nsList, err := schedulerClientSet.reconciler.
 		KubeClientSet.
 		CoreV1().
