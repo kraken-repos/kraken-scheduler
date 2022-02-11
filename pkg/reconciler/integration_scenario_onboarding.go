@@ -420,6 +420,7 @@ func StartHTTPServer(msgConsumer *IntegrationScenarioMsgConsumer) {
 			Methods("DELETE")
 		r.HandleFunc("/kraken/listAllTenants", msgConsumer.SchedulerClientSet.listTenants).
 			Methods("GET")
-		http.ListenAndServe(":443", r)
+		logging.FromContext(msgConsumer.SchedulerClientSet.ctx).Info("Starting http server on port 9095")
+		http.ListenAndServe(":9095", r)
 	}()
 }
